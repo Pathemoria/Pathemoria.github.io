@@ -166,7 +166,7 @@ body {
 .sidebar_right {
     /* Size */
     width: 15%;
-    height: 10%;
+    height: 20vh;
     background-color: rgb(24, 54, 80);
     border: 3px solid rgb(0, 26, 44);
     border-radius: 12px;
