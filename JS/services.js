@@ -6,6 +6,8 @@ const header1 = document.getElementById('segment1_grid_header1');
 const header2 = document.getElementById('segment1_grid_header2');
 const header3 = document.getElementById('segment1_grid_header3');
 
+const fields = document.querySelectorAll('[id^="segment1_grid_desc_individual"]');
+
 grid1.addEventListener('mouseover', () => {
     header1.style.paddingBottom = '4%';
 });
@@ -25,3 +27,13 @@ grid3.addEventListener('mouseout', () => {
     header3.style.paddingBottom = '1%';
 });
 
+fields.forEach((field, index) => {
+    field.addEventListener('mouseover', () => {
+        field.style.height = 'calc(100% + 6vh)'; // Increase height
+        field.style.transform = 'translateY(-6vh)'; // Move upwards to compensate
+    });
+    field.addEventListener('mouseout', () => {
+        field.style.height = '100%'; // Reset height
+        field.style.transform = 'translateY(0)'; // Reset position
+    });
+});

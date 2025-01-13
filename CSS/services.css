@@ -76,12 +76,12 @@ body {
     height: 50%;
 
     /* Margins */
-    padding: 4% 3% 3% 3%;
-    margin: 0% 3% 2% 2%;
+    padding: 3vh;
+    margin: 3vh 2vh 2vh 2vh;
     /* Border */
     border: 2px solid rgb(0, 26, 44);
     border-radius: 12px;
-    transition: 0.5s ease;
+    transition: 1.2s ease-out;
 }
 
 .segment1_grid_desc{
@@ -93,15 +93,15 @@ body {
     min-height: 70%;
     border-radius: 4px;
     /* Margin & Padding */
-    padding: 4% 1% 4% 1%;
-    margin: 4% 2% 4% 2%;
+    padding: 2vh 2vh 2vh 2vh;
+    margin: 12vh 3vh 3vh 3vh;
     /* Color */
     background-color: #1a3c55;
     border: 2px solid #183b53;
     transition: 0.8s ease-in-out;
 }
 .segment1_grid_desc_individual:hover{
-    background-color: #1a3f5a;
+    background-color: #1a4361;
 }
 
 
