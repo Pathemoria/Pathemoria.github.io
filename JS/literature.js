@@ -9,6 +9,7 @@ novels.forEach((novel, index) => {
         contents.forEach((content, reserve) => {
             content.style.width = '54vh';
             content.style.height = '40vh';
+            content.style.opacity = '100%'
         });
     });
     novel.addEventListener('mouseout', () => {
@@ -17,6 +18,8 @@ novels.forEach((novel, index) => {
         
         contents.forEach((content, reserve) => {
             content.style.width = '0vh';
+            content.style.height = '0vh';
+            content.style.opacity = '0%';
         });
     
     });
