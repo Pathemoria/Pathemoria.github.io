@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Grounds</title>
+
+    <!--
+        TYPOGRAPHY
+        Special Elite  — a typewriter-style font that looks struck onto the page,
+                         used for labels, captions, and accent text.
+        Lora           — a humanist serif that's warm and readable at body sizes,
+                         used for review text and names.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        /* ── RESET & BASE ─────────────────────────────────────── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --ink:        #1a1209;   /* near-black with warm brown undertone */
+            --parchment:  #f4efe6;   /* aged paper — the page background */
+            --cream:      #fdf8f0;   /* slightly lighter — used on card surfaces */
+            --amber:      #b5742a;   /* muted amber — accent colour, star gold */
+            --rule:       rgba(26, 18, 9, 0.10); /* for fine dividing lines */
+            --card-bg:    rgba(253, 248, 240, 0.15); /* frosted card: cream + transparency */
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            font-family: 'Lora', Georgia, serif;
+            background-color: var(--parchment);
+            color: var(--ink);
+        }
+
+        /* ── HEADER ───────────────────────────────────────────── */
+        header {
+            padding: 18px 48px;
+            border-bottom: 1px solid var(--rule);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: transparent;
+            position: relative;
+            z-index: 10;
+        }
+
+        .site-name {
+            font-family: 'Special Elite', monospace;
+            font-size: 1.25rem;
+            letter-spacing: 0.12em;
+            color: var(--ink);
+            text-transform: uppercase;
+        }
+
+        /* Placeholder navigation — will become real links later */
+        nav {
+            display: flex;
+            gap: 32px;
+        }
+
+        nav a {
+            font-family: 'Special Elite', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            text-decoration: none;
+            color: var(--ink);
+            opacity: 0.55;
+            transition: opacity 0.2s ease;
+        }
+
+        nav a:hover { opacity: 1; }
+
+        /* ── MAIN ─────────────────────────────────────────────── */
+        main {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            /* We use a CSS grid to centre the review card perfectly */
+            display: grid;
+            place-items: center;
+        }
+
+        /* The Lorenz canvas lives absolutely behind everything */
+        #attractor-canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.45; /* dimmed — it's background, not foreground */
+        }
+
+        /* ── REVIEW CARD ──────────────────────────────────────── */
+        /*
+            This is the centrepiece panel the user lands on.
+            It uses backdrop-filter: blur() so the Lorenz attractor
+            is visible through it, giving depth without obscuring the text.
+            The card is position: relative so the "Live reviews" caption
+            can be positioned absolutely within it.
+        */
+        .review-card {
+            position: relative;
+            z-index: 1;
+            width: min(580px, 88vw);
+            background: var(--card-bg);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border: 1px solid rgba(26, 18, 9, 0.10);
+            border-radius: 2px;  /* very slight — we want this to feel like paper, not a UI widget */
+            padding: 52px 52px 44px;
+            /* A faint shadow grounds the card on the page */
+            box-shadow:
+                0  2px  6px rgba(26, 18, 9, 0.04),
+                0  8px 28px rgba(26, 18, 9, 0.07);
+        }
+
+        /* ── "LIVE REVIEWS" CAPTION ───────────────────────────── */
+        /*
+            Sits in the top-right corner of the card.
+            Small, italic, typewriter font — feels like a handwritten
+            annotation in the margin of a page.
+            The small pulsing dot before the text suggests "live" data.
+        */
+        .live-label {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            font-family: 'Special Elite', monospace;
+            font-size: 0.62rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--amber);
+            opacity: 0.75;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* The pulsing dot — a small animation that implies liveness */
+        .live-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--amber);
+            animation: pulse 2.4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1;   transform: scale(1);    }
+            50%       { opacity: 0.3; transform: scale(0.75); }
+        }
+
+        /* ── REVIEW SLIDES ────────────────────────────────────── */
+        /*
+            Each .review-slide is stacked on top of the previous one
+            using absolute positioning within a fixed-height container.
+            Only the active slide is opacity: 1; all others are opacity: 0.
+            A CSS transition on opacity creates the crossfade.
+        */
+        .reviews-container {
+            position: relative;
+            overflow: hidden;
+            /*
+                Height is driven entirely by JavaScript.
+                The cubic-bezier here is a gentle ease-in-out — unhurried,
+                like a slow page turn rather than a UI widget snapping to size.
+            */
+            transition: height 0.85s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .review-slide {
+            /*
+                All slides are absolutely stacked at top:0.
+                Inactive slides are invisible and non-interactive.
+                The opacity transition is slightly longer than the height
+                transition so text fades in after the box has mostly
+                settled — content arrives into a calm, finished space.
+            */
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            opacity: 0;
+            transition: opacity 1.1s ease;
+            pointer-events: none;
+        }
+
+        .review-slide.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* ── STAR RATING ──────────────────────────────────────── */
+        .stars {
+            display: flex;
+            gap: 3px;
+            margin-bottom: 18px;
+        }
+
+        .star {
+            font-size: 1rem;
+            color: var(--amber);
+            /* Unicode filled star — no icon library needed */
+        }
+
+        .star.empty {
+            color: rgba(26, 18, 9, 0.18);
+        }
+
+        /* ── REVIEWER NAME ────────────────────────────────────── */
+        .reviewer-name {
+            font-family: 'Special Elite', monospace;
+            font-size: 0.78rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--ink);
+            opacity: 0.5;
+            margin-bottom: 14px;
+        }
+
+        /* ── REVIEW TEXT ──────────────────────────────────────── */
+        .review-text {
+            font-family: 'Lora', serif;
+            font-size: 1.05rem;
+            line-height: 1.75;
+            color: var(--ink);
+            font-style: italic;
+            margin-bottom: 24px;
+        }
+
+        /* The opening quotation mark — large, decorative, amber */
+        .review-text::before {
+            content: '\201C';
+            font-size: 2.8rem;
+            line-height: 0;
+            vertical-align: -0.55rem;
+            margin-right: 4px;
+            color: var(--amber);
+            opacity: 0.5;
+            font-style: normal;
+        }
+
+        /* ── OWNER RESPONSE ───────────────────────────────────── */
+        /*
+            The owner's response sits below the review, separated by a
+            fine horizontal rule. It's indented and slightly smaller,
+            conveying that it is a reply rather than the primary content.
+        */
+        .owner-response {
+            border-top: 1px solid var(--rule);
+            padding-top: 16px;
+            padding-left: 16px;
+            border-left: 2px solid rgba(181, 116, 42, 0.3); /* amber-tinted left bar */
+        }
+
+        .owner-label {
+            font-family: 'Special Elite', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--amber);
+            opacity: 0.7;
+            margin-bottom: 8px;
+        }
+
+        .owner-text {
+            font-family: 'Lora', serif;
+            font-size: 0.88rem;
+            line-height: 1.7;
+            color: var(--ink);
+            opacity: 0.65;
+        }
+
+        /* ── SLIDE INDICATOR DOTS ─────────────────────────────── */
+        /*
+            Small dots below the card show how many reviews exist
+            and which one is currently shown. A common and instantly
+            understood navigation convention.
+        */
+        .slide-dots {
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            margin-top: 22px;
+        }
+
+        .dot {
+            width: 20px;
+            height: 2px;
+            border-radius: 1px;
+            background: var(--ink);
+            opacity: 0.18;
+            transition: opacity 0.4s ease, width 0.4s ease;
+            cursor: pointer;
+        }
+
+        .dot.active {
+            width: 30px;  /* slightly wider on the active position — a subtle tell */
+            opacity: 0.45;
+        }
+
+        /* ── FOOTER ───────────────────────────────────────────── */
+        footer {
+            padding: 16px 48px;
+            border-top: 1px solid var(--rule);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        .footer-note {
+            font-family: 'Special Elite', monospace;
+            font-size: 0.6rem;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            opacity: 0.3;
+        }
+
+        /* ── RESPONSIVE ───────────────────────────────────────── */
+        @media (max-width: 600px) {
+            header { padding: 14px 20px; }
+            nav { gap: 18px; }
+            .review-card { padding: 36px 28px 32px; }
+            footer { padding: 14px 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ── HEADER ─────────────────────────────────────────────── -->
+    <header>
+        <span class="site-name">The Grounds</span>
+        <nav>
+            <a href="#">Menu</a>
+            <a href="#">Location</a>
+            <a href="#">Contact</a>
+        </nav>
+    </header>
+
+    <!-- ── MAIN ───────────────────────────────────────────────── -->
+    <main>
+
+        <!-- Lorenz attractor — sits behind the card, unchanged from previous version -->
+        <canvas id="attractor-canvas"></canvas>
+
+        <!-- ── REVIEW CARD ──────────────────────────────────────── -->
+        <div class="review-card">
+
+            <!-- "Live reviews" caption — top-right corner of the card -->
+            <div class="live-label">
+                <span class="live-dot"></span>
+                Live reviews
+            </div>
+
+            <!-- All review slides live inside this container -->
+            <div class="reviews-container" id="reviews-container">
+
+                <!-- ─ REVIEW 1 ─────────────────────────────────── -->
+                <div class="review-slide active" data-index="0">
+                    <div class="stars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                    </div>
+                    <div class="reviewer-name">Margaret T.</div>
+                    <p class="review-text">
+                        The kind of place you stumble into on a grey Tuesday
+                        and somehow leave feeling like the afternoon belonged to you.
+                        The espresso is serious, and so is the silence they let you keep.
+                    </p>
+                    <div class="owner-response">
+                        <div class="owner-label">Owner replied</div>
+                        <p class="owner-text">
+                            That grey Tuesday feeling is exactly what we set out to protect.
+                            Thank you for putting it so well, Margaret — see you next week.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- ─ REVIEW 2 ─────────────────────────────────── -->
+                <div class="review-slide" data-index="1">
+                    <div class="stars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                    </div>
+                    <div class="reviewer-name">Daniel R.</div>
+                    <p class="review-text">
+                        I've had cortados across three countries and this one
+                        asks nothing of you except to sit down and drink it slowly.
+                        That is harder to achieve than it sounds.
+                    </p>
+                    <div class="owner-response">
+                        <div class="owner-label">Owner replied</div>
+                        <p class="owner-text">
+                            Three countries is high praise for a small corner of this street.
+                            Glad we earned our place in that list, Daniel.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- ─ REVIEW 3 ─────────────────────────────────── -->
+                <div class="review-slide" data-index="2">
+                    <div class="stars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star empty">★</span>
+                    </div>
+                    <div class="reviewer-name">Sofía M.</div>
+                    <p class="review-text">
+                        Wonderful coffee and even better reading light by the window.
+                        My only complaint is the hours — I always arrive wanting
+                        one more cup and find the chairs already on the tables.
+                    </p>
+                    <div class="owner-response">
+                        <div class="owner-label">Owner replied</div>
+                        <p class="owner-text">
+                            A fair complaint, Sofía. We're working on it.
+                            In the meantime — the window seat is yours whenever you arrive early.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- ─ REVIEW 4 ─────────────────────────────────── -->
+                <div class="review-slide" data-index="3">
+                    <div class="stars">
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                        <span class="star">★</span>
+                    </div>
+                    <div class="reviewer-name">James O.</div>
+                    <p class="review-text">
+                        There are coffee shops that want you to notice them,
+                        and coffee shops that simply get on with it.
+                        The Grounds is the latter. Which is why I keep coming back.
+                    </p>
+                    <div class="owner-response">
+                        <div class="owner-label">Owner replied</div>
+                        <p class="owner-text">
+                            Getting on with it is about the finest thing anyone
+                            has ever said about us. Thank you, James.
+                        </p>
+                    </div>
+                </div>
+
+            </div><!-- /reviews-container -->
+
+            <!-- Navigation dots — one per review -->
+            <div class="slide-dots" id="slide-dots">
+                <span class="dot active" data-index="0"></span>
+                <span class="dot"        data-index="1"></span>
+                <span class="dot"        data-index="2"></span>
+                <span class="dot"        data-index="3"></span>
+            </div>
+
+        </div><!-- /review-card -->
+
+    </main>
+
+    <!-- ── FOOTER ─────────────────────────────────────────────── -->
+    <footer>
+        <span class="footer-note">The Grounds — Est. 2019</span>
+        <span class="footer-note">All rights reserved</span>
+    </footer>
+
+
+    <script>
+        // ═══════════════════════════════════════════════════════
+        //  SECTION 1: REVIEW SLIDESHOW
+        //
+        //  The slideshow has two parallel animations running together:
+        //
+        //  1. OPACITY crossfade — handled entirely by CSS transitions.
+        //     JavaScript only toggles the .active class; the browser
+        //     does the rest. The inactive slides sit at opacity:0 and
+        //     the active one at opacity:1, with a 1.1s ease between them.
+        //
+        //  2. HEIGHT animation — driven by JavaScript, because CSS alone
+        //     cannot transition between `height: auto` values (it can
+        //     only animate between explicit pixel values). The approach:
+        //     - At page load, each slide's natural pixel height is
+        //       measured and stored in the slideHeights array.
+        //     - On each transition, the container's height style is set
+        //       to the incoming slide's stored height in pixels.
+        //     - Because the container has `transition: height 0.85s` in
+        //       CSS, the browser animates between the two values smoothly.
+        //
+        //  The opacity transition is intentionally slightly LONGER than
+        //  the height transition (1.1s vs 0.85s). This means the box
+        //  finishes resizing first, and the text fades in afterward —
+        //  content arrives into a settled, calm space rather than
+        //  appearing mid-resize.
+        // ═══════════════════════════════════════════════════════
+
+        const INTERVAL   = 16100;  // 7000 * 2.3 — comfortable reading pace
+        const slides     = document.querySelectorAll('.review-slide');
+        const dots       = document.querySelectorAll('.dot');
+        const container  = document.getElementById('reviews-container');
+        let   currentIdx = 0;
+        let   timer      = null;
+
+        // ── PRE-MEASURE SLIDE HEIGHTS ────────────────────────────
+        //
+        //  The challenge: slides are `position: absolute`, so they don't
+        //  participate in the normal document flow and their offsetHeight
+        //  would read as 0 (the browser doesn't calculate layout for them).
+        //
+        //  The solution: briefly set each slide to `position: relative`
+        //  just long enough to force a layout calculation and read its
+        //  natural height. This happens synchronously before the first
+        //  paint, so the user never sees any flash or jump.
+        //
+        //  We also temporarily disable the opacity transition so this
+        //  measurement pass doesn't accidentally trigger a visible fade.
+        // ─────────────────────────────────────────────────────────
+        const slideHeights = [];
+
+        slides.forEach((slide, i) => {
+            // Pull out of absolute stacking for one layout pass
+            slide.style.transition = 'none';       // suppress any accidental fade
+            slide.style.position   = 'relative';
+            slide.style.opacity    = '0';
+
+            slideHeights.push(slide.offsetHeight); // read natural height
+
+            // Restore — active slide stays visible, others go back to absolute
+            slide.style.position   = '';
+            slide.style.opacity    = '';
+            slide.style.transition = '';
+        });
+
+        // Set the container's initial height to match the first (active) slide.
+        // This must happen before the CSS transition is active — we're setting
+        // the starting value, not triggering an animation.
+        container.style.height = slideHeights[0] + 'px';
+
+
+        // ── TRANSITION FUNCTION ──────────────────────────────────
+        function goToSlide(index) {
+            const incoming = (index + slides.length) % slides.length;
+
+            // Step 1: animate the container height toward the incoming slide's
+            // stored height. Because `.reviews-container` has `transition: height`
+            // in CSS, this single line triggers the smooth resize.
+            container.style.height = slideHeights[incoming] + 'px';
+
+            // Step 2: crossfade — remove .active from outgoing, apply to incoming.
+            // The CSS opacity transition handles the visual fade automatically.
+            slides[currentIdx].classList.remove('active');
+            dots[currentIdx].classList.remove('active');
+
+            currentIdx = incoming;
+
+            slides[currentIdx].classList.add('active');
+            dots[currentIdx].classList.add('active');
+        }
+
+        function startAutoplay() {
+            clearInterval(timer);
+            timer = setInterval(() => goToSlide(currentIdx + 1), INTERVAL);
+        }
+
+        // Manual dot navigation resets the autoplay timer so the next
+        // automatic advance happens a full interval after the click.
+        dots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                goToSlide(parseInt(dot.dataset.index));
+                startAutoplay();
+            });
+        });
+
+        startAutoplay();
+
+
+        // ═══════════════════════════════════════════════════════
+        //  SECTION 2: LORENZ ATTRACTOR (unchanged from previous)
+        //  Retained as the background animation while we develop
+        //  the page. Will be replaced with steam particles later.
+        // ═══════════════════════════════════════════════════════
+        const σ     = 10;
+        const ρ     = 28;
+        const β     = 8 / 3;
+        const dt    = 0.003;
+        const NOISE = 0.025;
+
+        const canvas = document.getElementById('attractor-canvas');
+        const ctx    = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width  = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+        }
+
+        function lorenzDerivatives(x, y, z) {
+            return {
+                dx: σ * (y - x),
+                dy: x * (ρ - z) - y,
+                dz: x * y - β * z
+            };
+        }
+
+        function rk4Step(x, y, z, addNoise = false) {
+            const k1 = lorenzDerivatives(x, y, z);
+            const k2 = lorenzDerivatives(x + k1.dx*dt/2, y + k1.dy*dt/2, z + k1.dz*dt/2);
+            const k3 = lorenzDerivatives(x + k2.dx*dt/2, y + k2.dy*dt/2, z + k2.dz*dt/2);
+            const k4 = lorenzDerivatives(x + k3.dx*dt,   y + k3.dy*dt,   z + k3.dz*dt  );
+
+            const nx = x + (k1.dx + 2*k2.dx + 2*k3.dx + k4.dx) * dt / 6;
+            const ny = y + (k1.dy + 2*k2.dy + 2*k3.dy + k4.dy) * dt / 6;
+            const nz = z + (k1.dz + 2*k2.dz + 2*k3.dz + k4.dz) * dt / 6;
+
+            if (!addNoise) return { x: nx, y: ny, z: nz };
+            const n = () => (Math.random() * 2 - 1) * NOISE;
+            return { x: nx + n(), y: ny + n(), z: nz + n() };
+        }
+
+        function project(lx, lz) {
+            const cx    = canvas.width  / 2;
+            const cy    = canvas.height / 2;
+            const scale = Math.min(canvas.width, canvas.height) / 55;
+            return { px: cx + lx * scale, py: cy - (lz - 25) * scale };
+        }
+
+        function drawCube(cx, cy, s, colors) {
+            const h = s * 0.75, ty = s * 0.45;
+            ctx.beginPath();
+            ctx.moveTo(cx, cy-ty); ctx.lineTo(cx+s, cy);
+            ctx.lineTo(cx, cy+ty); ctx.lineTo(cx-s, cy);
+            ctx.closePath(); ctx.fillStyle = colors.top; ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(cx-s, cy); ctx.lineTo(cx, cy+ty);
+            ctx.lineTo(cx, cy+ty+h); ctx.lineTo(cx-s, cy+h);
+            ctx.closePath(); ctx.fillStyle = colors.left; ctx.fill();
+            ctx.beginPath();
+            ctx.moveTo(cx+s, cy); ctx.lineTo(cx, cy+ty);
+            ctx.lineTo(cx, cy+ty+h); ctx.lineTo(cx+s, cy+h);
+            ctx.closePath(); ctx.fillStyle = colors.right; ctx.fill();
+        }
+
+        function drawVelocityVector(cx, cy, d, alpha) {
+            const scale  = Math.min(canvas.width, canvas.height) / 55;
+            const vx     =  d.dx * scale * dt * 300;
+            const vy     = -d.dz * scale * dt * 300;
+            const len    = Math.sqrt(vx*vx + vy*vy);
+            const capLen = Math.min(len, 14);
+            const nx     = len > 0 ? (vx/len)*capLen : 0;
+            const ny     = len > 0 ? (vy/len)*capLen : 0;
+            ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx+nx, cy+ny);
+            ctx.strokeStyle = `hsla(30, 40%, 40%, ${(alpha*0.4).toFixed(2)})`;
+            ctx.lineWidth   = 0.8; ctx.stroke();
+        }
+
+        // Warm amber-brown tones for the cubes — matching the coffee aesthetic
+        // instead of the prussian blue from the previous version.
+        function faceColors(alpha) {
+            const a = alpha * 0.45;
+            return {
+                top:   `hsla(30, 35%, 52%, ${a.toFixed(2)})`,
+                left:  `hsla(30, 35%, 32%, ${(a*0.85).toFixed(2)})`,
+                right: `hsla(30, 35%, 20%, ${(a*0.70).toFixed(2)})`
+            };
+        }
+
+        const PARTICLE_COUNT = 200;
+        const particles      = [];
+
+        function initParticles() {
+            particles.length = 0;
+            let x = 0.1, y = 0.0, z = 0.0;
+            for (let i = 0; i < 1000; i++) ({ x, y, z } = rk4Step(x, y, z));
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                for (let j = 0; j < 40; j++) ({ x, y, z } = rk4Step(x, y, z));
+                particles.push({ x, y, z });
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (const p of particles) {
+                const next  = rk4Step(p.x, p.y, p.z, true);
+                p.x = next.x; p.y = next.y; p.z = next.z;
+                const d     = lorenzDerivatives(p.x, p.y, p.z);
+                const spd   = Math.sqrt(d.dx*d.dx + d.dy*d.dy + d.dz*d.dz);
+                const alpha = 0.40 + Math.min(spd/80, 1) * 0.50;
+                const { px, py } = project(p.x, p.z);
+                drawVelocityVector(px, py, d, alpha);
+                drawCube(px, py, 5.5, faceColors(alpha));
+            }
+            requestAnimationFrame(animate);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+        initParticles();
+        requestAnimationFrame(animate);
+    </script>
+</body>
+</html>
