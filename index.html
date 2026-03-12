@@ -9,12 +9,12 @@
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         :root {
-            --ink:      #1a1209;
-            --parchment:#f4efe6;
-            --cream:    #fdf8f0;
-            --amber:    #b5742a;
-            --rule:     rgba(26, 18, 9, 0.10);
-            --card-bg:  rgba(253, 248, 240, 0.15);
+            --ink:       #1a1209;
+            --parchment: #f4efe6;
+            --cream:     #fdf8f0;
+            --amber:     #b5742a;
+            --rule:      rgba(26, 18, 9, 0.10);
+            --card-bg:   rgba(253, 248, 240, 0.15);
         }
         html, body { height: 100%; }
         body {
@@ -22,15 +22,31 @@
             font-family: 'Lora', Georgia, serif;
             background-color: var(--parchment); color: var(--ink);
         }
+
+        /* ENTRANCE ANIMATIONS
+           canvasFadeIn ends at 0.45 to match the intended canvas opacity.
+           All elements held at opacity:0 before their delay by fill-mode:both. */
+        @keyframes fadeIn       { from{opacity:0} to{opacity:1} }
+        @keyframes canvasFadeIn { from{opacity:0} to{opacity:0.45} }
+        @keyframes headerIn     { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes cardIn       { from{opacity:0;transform:translateY(10px)}  to{opacity:1;transform:translateY(0)} }
+        #attractor-canvas         { animation: canvasFadeIn 2.0s ease 0.4s both; }
+        header                    { animation: headerIn     1.0s ease 0.9s both; }
+        .nav-link:nth-child(1)    { animation: fadeIn       0.7s ease 1.3s both; }
+        .nav-link:nth-child(2)    { animation: fadeIn       0.7s ease 1.5s both; }
+        .nav-link:nth-child(3)    { animation: fadeIn       0.7s ease 1.7s both; }
+        .nav-link:nth-child(4)    { animation: fadeIn       0.7s ease 1.9s both; }
+        .nav-link:nth-child(5)    { animation: fadeIn       0.7s ease 2.1s both; }
+        .stage-card               { animation: cardIn 1.4s cubic-bezier(0.25,0,0.2,1) 1.6s both; }
+        footer                    { animation: fadeIn       1.0s ease 2.2s both; }
+
+        /* HEADER */
         header {
             padding: 18px 48px; border-bottom: 1px solid var(--rule);
             display: flex; align-items: center; justify-content: space-between;
             position: relative; z-index: 10;
         }
-        .site-name {
-            font-family: 'Special Elite', monospace; font-size: 1.25rem;
-            letter-spacing: 0.12em; text-transform: uppercase;
-        }
+        .site-name { font-family: 'Special Elite', monospace; font-size: 1.25rem; letter-spacing: 0.12em; text-transform: uppercase; }
         nav { display: flex; gap: 32px; }
         nav a {
             font-family: 'Special Elite', monospace; font-size: 0.7rem;
@@ -40,19 +56,17 @@
         }
         nav a:hover  { opacity: 0.85; }
         nav a.active { opacity: 1; }
-        main {
-            flex: 1; position: relative; overflow: hidden;
-            display: grid; place-items: center;
-        }
-        #attractor-canvas {
-            position: absolute; inset: 0;
-            width: 100%; height: 100%; z-index: 0; opacity: 0.45;
-        }
+
+        /* MAIN */
+        main { flex: 1; position: relative; overflow: hidden; display: grid; place-items: center; }
+        #attractor-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+
+        /* STAGE CARD */
         .stage-card {
             position: relative; z-index: 1;
             background: var(--card-bg);
             backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-            border: 1px solid rgba(26, 18, 9, 0.10); border-radius: 2px;
+            border: 1px solid rgba(26,18,9,0.10); border-radius: 2px;
             overflow: hidden;
             transition: width 0.75s cubic-bezier(0.4,0,0.2,1), height 0.90s cubic-bezier(0.4,0,0.2,1);
         }
@@ -62,6 +76,11 @@
             opacity: 0; transition: opacity 1.0s ease; pointer-events: none;
         }
         .stage-section.active { opacity: 1; pointer-events: auto; }
+        /* Explicitly block all descendants of inactive sections.
+           pointer-events:none on a parent is NOT inherited in HTML —
+           children default to auto independently, causing ghost clicks.
+           This rule propagates the block to every nested element. */
+        .stage-section:not(.active) * { pointer-events: none !important; }
         .section-label {
             position: absolute; top: 14px; right: 18px;
             font-family: 'Special Elite', monospace; font-size: 0.6rem;
@@ -69,73 +88,35 @@
             color: var(--amber); opacity: 0.75;
             display: flex; align-items: center; gap: 6px;
         }
-        .live-dot {
-            width: 5px; height: 5px; border-radius: 50%; background: var(--amber);
-            animation: pulse 2.4s ease-in-out infinite;
-        }
-        @keyframes pulse {
-            0%,100% { opacity:1; transform:scale(1); }
-            50%      { opacity:0.3; transform:scale(0.75); }
-        }
-        .section-heading {
-            font-family: 'Special Elite', monospace; font-size: 1.0rem;
-            letter-spacing: 0.10em; text-transform: uppercase; opacity: 0.85;
-            padding-bottom: 12px; margin-bottom: 22px; border-bottom: 1px solid var(--rule);
-        }
+        .live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--amber); animation: pulse 2.4s ease-in-out infinite; }
+        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.75)} }
+        .section-heading { font-family: 'Special Elite', monospace; font-size: 1.0rem; letter-spacing: 0.10em; text-transform: uppercase; opacity: 0.85; padding-bottom: 12px; margin-bottom: 22px; border-bottom: 1px solid var(--rule); }
 
         /* REVIEWS */
-        .reviews-container {
-            position: relative; overflow: hidden;
-            transition: height 0.85s cubic-bezier(0.4,0,0.2,1);
-        }
-        .review-slide {
-            position: absolute; top:0; left:0; right:0;
-            opacity:0; transition: opacity 1.1s ease; pointer-events:none;
-        }
+        .reviews-container { position: relative; overflow: hidden; transition: height 0.85s cubic-bezier(0.4,0,0.2,1); }
+        .review-slide { position: absolute; top:0; left:0; right:0; opacity:0; transition: opacity 1.1s ease; pointer-events:none; }
         .review-slide.active { opacity:1; pointer-events:auto; }
         .stars { display:flex; gap:3px; margin-bottom:16px; }
         .star       { font-size:1rem; color:var(--amber); }
         .star.empty { color:rgba(26,18,9,0.18); }
-        .reviewer-name {
-            font-family:'Special Elite',monospace; font-size:0.75rem;
-            letter-spacing:0.12em; text-transform:uppercase; opacity:0.5; margin-bottom:12px;
-        }
-        .review-text {
-            font-size:1.02rem; line-height:1.75; font-style:italic;
-            margin-bottom:20px; position:relative;
-        }
-        .review-text::before {
-            content:'\201C'; font-size:3.5rem; font-family:Georgia,serif;
-            color:var(--amber); opacity:0.25; line-height:1;
-            position:absolute; top:-0.15em; left:-0.35em; pointer-events:none;
-        }
-        .owner-response {
-            padding-left:16px; border-left:2px solid var(--amber); margin-top:8px; opacity:0.7;
-        }
-        .owner-label {
-            font-family:'Special Elite',monospace; font-size:0.6rem;
-            letter-spacing:0.14em; text-transform:uppercase; color:var(--amber); margin-bottom:6px;
-        }
-        .owner-text { font-size:0.88rem; line-height:1.65; }
-        .slide-dots { display:flex; justify-content:center; gap:6px; margin-top:20px; }
-        .dot {
-            width:20px; height:2px; border-radius:1px; background:var(--ink);
-            opacity:0.18; transition:opacity 0.4s ease, width 0.4s ease; cursor:pointer;
-        }
+        .reviewer-name { font-family:'Special Elite',monospace; font-size:0.75rem; letter-spacing:0.12em; text-transform:uppercase; opacity:0.5; margin-bottom:12px; }
+        .review-text { font-size:1.02rem; line-height:1.75; font-style:italic; margin-bottom:20px; }
+        .owner-response { padding-left:16px; border-left:2px solid var(--amber); margin-top:8px; opacity:0.7; }
+        .owner-label { font-family:'Special Elite',monospace; font-size:0.6rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--amber); margin-bottom:6px; }
+        .owner-text  { font-size:0.88rem; line-height:1.65; }
+        .slide-dots  { display:flex; justify-content:center; gap:6px; margin-top:20px; }
+        .dot { width:20px; height:2px; border-radius:1px; background:var(--ink); opacity:0.18; transition:opacity 0.4s ease, width 0.4s ease; cursor:pointer; }
         .dot.active { width:30px; opacity:0.45; }
 
         /* LOCATION */
         .location-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; }
-        .location-map { width:100%; height:210px; border:1px solid var(--rule); overflow:hidden; }
+        .location-map  { width:100%; height:210px; border:1px solid var(--rule); overflow:hidden; }
         .location-map iframe { width:100%; height:100%; border:none; display:block; filter:sepia(0.3) contrast(0.92) brightness(1.02); }
         .location-details { display:flex; flex-direction:column; }
         .loc-block { padding-bottom:14px; margin-bottom:14px; border-bottom:1px solid var(--rule); }
         .loc-block:last-child { border-bottom:none; padding-bottom:0; margin-bottom:0; }
-        .loc-label {
-            font-family:'Special Elite',monospace; font-size:0.58rem;
-            letter-spacing:0.20em; text-transform:uppercase; color:var(--amber); opacity:0.7; margin-bottom:6px;
-        }
-        .loc-text { font-size:0.92rem; line-height:1.75; opacity:0.72; }
+        .loc-label { font-family:'Special Elite',monospace; font-size:0.58rem; letter-spacing:0.20em; text-transform:uppercase; color:var(--amber); opacity:0.7; margin-bottom:6px; }
+        .loc-text    { font-size:0.92rem; line-height:1.75; opacity:0.72; }
         .hours-table { width:100%; border-collapse:collapse; }
         .hours-table td { font-size:0.88rem; line-height:1.9; opacity:0.70; padding:0; }
         .hours-table td:last-child { text-align:right; opacity:0.50; }
@@ -145,10 +126,7 @@
         .about-layout { display:flex; align-items:center; gap:18px; }
         .about-layout .paginator { flex:1; min-width:0; }
         .about-side-dots { display:flex; flex-direction:column; gap:8px; align-items:center; flex-shrink:0; }
-        .about-dot {
-            width:2px; height:16px; border-radius:1px; background:var(--ink);
-            opacity:0.18; cursor:pointer; transition:height 0.45s ease, opacity 0.4s ease;
-        }
+        .about-dot { width:2px; height:16px; border-radius:1px; background:var(--ink); opacity:0.18; cursor:pointer; transition:height 0.45s ease, opacity 0.4s ease; }
         .about-dot.active { height:28px; opacity:0.52; }
         .paginator { position:relative; overflow:hidden; transition:height 0.75s cubic-bezier(0.4,0,0.2,1); }
         .pager-page { position:absolute; top:0; left:0; right:0; opacity:0; transition:opacity 0.9s ease; pointer-events:none; }
@@ -164,31 +142,73 @@
         }
         @keyframes hintFade { 0%{opacity:0} 20%{opacity:0.28} 70%{opacity:0.28} 100%{opacity:0} }
 
+        /* GALLERY */
+        .gallery-layout { display:flex; align-items:flex-start; gap:18px; }
+        .gallery-layout .gallery-paginator { flex:1; min-width:0; }
+        .gallery-paginator { position:relative; overflow:hidden; transition:height 0.75s cubic-bezier(0.4,0,0.2,1); }
+        .gallery-page { position:absolute; top:0; left:0; right:0; opacity:0; transition:opacity 0.9s ease; pointer-events:none; }
+        .gallery-page.active { opacity:1; pointer-events:auto; }
+        .gallery-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+        .gallery-cell { position:relative; aspect-ratio:4/3; overflow:hidden; cursor:zoom-in; filter:sepia(0.15) contrast(0.95) brightness(1.02); transition:filter 0.3s ease, transform 0.3s ease; }
+        .gallery-cell:hover { filter:sepia(0) contrast(1) brightness(1.04); transform:scale(1.018); z-index:2; }
+        .gallery-cell img { width:100%; height:100%; object-fit:cover; display:block; }
+        .gallery-side-dots { display:flex; flex-direction:column; gap:8px; align-items:center; flex-shrink:0; padding-top:4px; }
+        .gallery-dot { width:2px; height:16px; border-radius:1px; background:var(--ink); opacity:0.18; cursor:pointer; transition:height 0.45s ease, opacity 0.4s ease; }
+        .gallery-dot.active { height:28px; opacity:0.52; }
+
+        /* LIGHTBOX */
+        .lightbox { position:fixed; inset:0; z-index:100; background:rgba(18,12,6,0.92); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.4s ease; }
+        .lightbox.visible { opacity:1; pointer-events:auto; }
+        .lightbox-img-wrap { position:relative; max-width:90vw; max-height:85vh; display:flex; align-items:center; justify-content:center; }
+        .lightbox-img { max-width:90vw; max-height:85vh; object-fit:contain; display:block; opacity:0; transition:opacity 0.35s ease; filter:brightness(0.97) sepia(0.04); }
+        .lightbox-img.loaded { opacity:1; }
+        .lightbox-counter { position:absolute; bottom:-28px; left:50%; transform:translateX(-50%); font-family:'Special Elite',monospace; font-size:0.58rem; letter-spacing:0.20em; text-transform:uppercase; color:var(--parchment); opacity:0.35; white-space:nowrap; }
+        .lightbox-close { position:absolute; top:20px; right:24px; font-family:'Special Elite',monospace; font-size:0.6rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--parchment); opacity:0.45; cursor:pointer; background:none; border:none; transition:opacity 0.2s ease; }
+        .lightbox-close:hover { opacity:1; }
+        .lightbox-prev, .lightbox-next { position:absolute; top:50%; transform:translateY(-50%); font-family:'Special Elite',monospace; font-size:0.6rem; letter-spacing:0.18em; text-transform:uppercase; color:var(--parchment); opacity:0.35; cursor:pointer; background:none; border:none; transition:opacity 0.2s ease; user-select:none; }
+        .lightbox-prev { left:24px; }
+        .lightbox-next { right:24px; }
+        .lightbox-prev:hover, .lightbox-next:hover { opacity:0.9; }
+        .lightbox-prev.hidden, .lightbox-next.hidden { opacity:0; pointer-events:none; }
+
         /* CONTACT */
+        .contact-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; }
+        .contact-info { padding-right:36px; border-right:1px solid var(--rule); }
+        .contact-form-col { padding-left:36px; }
         .contact-body { display:flex; flex-direction:column; }
         .contact-line { display:flex; flex-direction:column; gap:4px; padding:14px 0; border-bottom:1px solid var(--rule); }
         .contact-line:first-child { padding-top:0; }
         .contact-line:last-child  { border-bottom:none; }
-        .contact-label {
-            font-family:'Special Elite',monospace; font-size:0.58rem;
-            letter-spacing:0.20em; text-transform:uppercase; color:var(--amber); opacity:0.65;
-        }
+        .contact-label { font-family:'Special Elite',monospace; font-size:0.58rem; letter-spacing:0.20em; text-transform:uppercase; color:var(--amber); opacity:0.65; }
         .contact-value { font-size:0.96rem; line-height:1.6; opacity:0.75; }
+        .contact-form { display:flex; flex-direction:column; gap:0; }
+        .form-field { display:flex; flex-direction:column; gap:6px; padding:14px 0; border-bottom:1px solid var(--rule); }
+        .form-field:first-child { padding-top:0; }
+        .form-label { font-family:'Special Elite',monospace; font-size:0.58rem; letter-spacing:0.20em; text-transform:uppercase; color:var(--amber); opacity:0.65; }
+        .form-input, .form-textarea { font-family:'Lora',Georgia,serif; font-size:0.94rem; color:var(--ink); background:transparent; border:none; border-bottom:1px solid var(--rule); outline:none; padding:4px 0; width:100%; resize:none; transition:border-color 0.2s ease; }
+        .form-input:focus, .form-textarea:focus { border-bottom-color:var(--amber); }
+        .form-input::placeholder, .form-textarea::placeholder { color:var(--ink); opacity:0.25; font-style:italic; }
+        .form-textarea { min-height:72px; line-height:1.65; }
+        .form-submit { margin-top:20px; align-self:flex-start; font-family:'Special Elite',monospace; font-size:0.65rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--ink); background:transparent; border:1px solid rgba(26,18,9,0.20); padding:8px 20px; cursor:pointer; opacity:0.6; transition:opacity 0.2s ease, border-color 0.2s ease; }
+        .form-submit:hover { opacity:1; border-color:var(--amber); color:var(--amber); }
+        .form-confirm { display:none; flex-direction:column; gap:10px; padding-top:8px; }
+        .form-confirm.visible { display:flex; }
+        .form-confirm-title { font-family:'Special Elite',monospace; font-size:0.75rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--amber); opacity:0.85; }
+        .form-confirm-text { font-size:0.92rem; line-height:1.75; font-style:italic; opacity:0.65; }
 
         /* FOOTER */
-        footer {
-            padding:16px 48px; border-top:1px solid var(--rule);
-            display:flex; justify-content:space-between; align-items:center;
-            position:relative; z-index:10;
-        }
-        .footer-note {
-            font-family:'Special Elite',monospace; font-size:0.6rem;
-            letter-spacing:0.14em; text-transform:uppercase; opacity:0.3;
-        }
+        footer { padding:16px 48px; border-top:1px solid var(--rule); display:flex; justify-content:space-between; align-items:center; position:relative; z-index:10; }
+        .footer-note { font-family:'Special Elite',monospace; font-size:0.6rem; letter-spacing:0.14em; text-transform:uppercase; opacity:0.3; }
+
+        /* RESPONSIVE */
         @media (max-width:700px) {
             header { padding:14px 20px; } nav { gap:18px; } footer { padding:14px 20px; }
             .stage-section { padding:32px 28px 28px 28px; }
             .location-grid { grid-template-columns:1fr; }
+            .gallery-grid  { grid-template-columns:repeat(2,1fr); }
+            .contact-grid  { grid-template-columns:1fr; }
+            .contact-info  { padding-right:0; border-right:none; border-bottom:1px solid var(--rule); padding-bottom:20px; margin-bottom:20px; }
+            .contact-form-col { padding-left:0; }
         }
     </style>
 </head>
@@ -200,60 +220,47 @@
         <a class="nav-link active" data-section="reviews">Reviews</a>
         <a class="nav-link"        data-section="location">Location</a>
         <a class="nav-link"        data-section="about">About</a>
+        <a class="nav-link"        data-section="gallery">Gallery</a>
         <a class="nav-link"        data-section="contact">Contact</a>
     </nav>
 </header>
 
 <main>
     <canvas id="attractor-canvas"></canvas>
-
     <div class="stage-card" id="stage-card">
 
         <!-- REVIEWS -->
         <div class="stage-section active" id="section-reviews">
             <div class="section-label"><span class="live-dot"></span>Live reviews</div>
             <div class="reviews-container" id="reviews-container">
-
                 <div class="review-slide active" data-index="0">
-                    <div class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+                    <div class="stars"><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span></div>
                     <div class="reviewer-name">Margaret T.</div>
                     <p class="review-text">The kind of place you stumble into on a grey Tuesday and somehow leave feeling like the afternoon belonged to you. The espresso is serious, and so is the silence they let you keep.</p>
-                    <div class="owner-response">
-                        <div class="owner-label">Owner replied</div>
-                        <p class="owner-text">That grey Tuesday feeling is exactly what we set out to protect. Thank you for putting it so well, Margaret — see you next week.</p>
-                    </div>
+                    <div class="owner-response"><div class="owner-label">Owner replied</div>
+                    <p class="owner-text">That grey Tuesday feeling is exactly what we set out to protect. Thank you for putting it so well, Margaret &#8212; see you next week.</p></div>
                 </div>
-
                 <div class="review-slide" data-index="1">
-                    <div class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+                    <div class="stars"><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span></div>
                     <div class="reviewer-name">Daniel R.</div>
                     <p class="review-text">I've had cortados across three countries and this one asks nothing of you except to sit down and drink it slowly. That is harder to achieve than it sounds.</p>
-                    <div class="owner-response">
-                        <div class="owner-label">Owner replied</div>
-                        <p class="owner-text">Three countries is high praise for a small corner of this street. Glad we earned our place in that list, Daniel.</p>
-                    </div>
+                    <div class="owner-response"><div class="owner-label">Owner replied</div>
+                    <p class="owner-text">Three countries is high praise for a small corner of this street. Glad we earned our place in that list, Daniel.</p></div>
                 </div>
-
                 <div class="review-slide" data-index="2">
-                    <div class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star empty">★</span></div>
-                    <div class="reviewer-name">Sofía M.</div>
-                    <p class="review-text">Wonderful coffee and even better reading light by the window. My only complaint is the hours — I always arrive wanting one more cup and find the chairs already on the tables.</p>
-                    <div class="owner-response">
-                        <div class="owner-label">Owner replied</div>
-                        <p class="owner-text">A fair complaint, Sofía. We're working on it. In the meantime — the window seat is yours whenever you arrive early.</p>
-                    </div>
+                    <div class="stars"><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star empty">&#9733;</span></div>
+                    <div class="reviewer-name">Sof&#237;a M.</div>
+                    <p class="review-text">Wonderful coffee and even better reading light by the window. My only complaint is the hours &#8212; I always arrive wanting one more cup and find the chairs already on the tables.</p>
+                    <div class="owner-response"><div class="owner-label">Owner replied</div>
+                    <p class="owner-text">A fair complaint, Sof&#237;a. We're working on it. In the meantime &#8212; the window seat is yours whenever you arrive early.</p></div>
                 </div>
-
                 <div class="review-slide" data-index="3">
-                    <div class="stars"><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span><span class="star">★</span></div>
+                    <div class="stars"><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span><span class="star">&#9733;</span></div>
                     <div class="reviewer-name">James O.</div>
                     <p class="review-text">There are coffee shops that want you to notice them, and coffee shops that simply get on with it. The Grounds is the latter. Which is why I keep coming back.</p>
-                    <div class="owner-response">
-                        <div class="owner-label">Owner replied</div>
-                        <p class="owner-text">Getting on with it is about the finest thing anyone has ever said about us. Thank you, James.</p>
-                    </div>
+                    <div class="owner-response"><div class="owner-label">Owner replied</div>
+                    <p class="owner-text">Getting on with it is about the finest thing anyone has ever said about us. Thank you, James.</p></div>
                 </div>
-
             </div>
             <div class="slide-dots" id="slide-dots">
                 <span class="dot active" data-index="0"></span>
@@ -272,21 +279,18 @@
                     <iframe src="https://www.openstreetmap.org/export/embed.html?bbox=16.3648%2C48.2083%2C16.3748%2C48.2133&layer=mapnik&marker=48.2108%2C16.3698" allowfullscreen loading="lazy" title="Map"></iframe>
                 </div>
                 <div class="location-details">
-                    <div class="loc-block">
-                        <div class="loc-label">Address</div>
+                    <div class="loc-block"><div class="loc-label">Address</div>
                         <div class="loc-text">14 Herenstraat<br>Old Quarter<br>Sample City, 1016 CB</div>
                     </div>
-                    <div class="loc-block">
-                        <div class="loc-label">Opening Hours</div>
+                    <div class="loc-block"><div class="loc-label">Opening Hours</div>
                         <table class="hours-table">
-                            <tr><td>Monday – Friday</td><td>07:30 – 18:00</td></tr>
-                            <tr><td>Saturday</td>        <td>08:00 – 17:00</td></tr>
-                            <tr><td>Sunday</td>          <td>09:00 – 15:00</td></tr>
+                            <tr><td>Monday &#8211; Friday</td><td>07:30 &#8211; 18:00</td></tr>
+                            <tr><td>Saturday</td><td>08:00 &#8211; 17:00</td></tr>
+                            <tr><td>Sunday</td><td>09:00 &#8211; 15:00</td></tr>
                         </table>
                     </div>
-                    <div class="loc-block">
-                        <div class="loc-label">Getting Here</div>
-                        <div class="loc-text">Tram 2 — Herenstraat stop<br>Parking on Keizersgracht</div>
+                    <div class="loc-block"><div class="loc-label">Getting Here</div>
+                        <div class="loc-text">Tram 2 &#8212; Herenstraat stop<br>Parking on Keizersgracht</div>
                     </div>
                 </div>
             </div>
@@ -303,12 +307,12 @@
                         <p>We set out to build a place where ordering a coffee did not feel like standing at a counter, but like sitting down in someone's home. That distinction requires a great deal of effort to make invisible.</p>
                     </div>
                     <div class="pager-page about-page" data-about-index="1">
-                        <p>We source our beans directly from three farms — two in Ethiopia, one in Colombia — and roast them weekly in small batches on site. A coffee roasted on Tuesday and brewed on Friday tastes like something alive.</p>
+                        <p>We source our beans directly from three farms &#8212; two in Ethiopia, one in Colombia &#8212; and roast them weekly in small batches on site. A coffee roasted on Tuesday and brewed on Friday tastes like something alive.</p>
                         <p>Every origin we carry has been visited by someone on our team. We do not buy from catalogues. We buy from people.</p>
                     </div>
                     <div class="pager-page about-page" data-about-index="2">
                         <p>Our space was designed around the idea of productive stillness. No music loud enough to intrude. Natural light where possible. Tables spaced far enough apart that a conversation stays a conversation.</p>
-                        <p>We have regulars who have come every morning for four years and we still do not know their names — and that, we think, is a compliment.</p>
+                        <p>We have regulars who have come every morning for four years and we still do not know their names &#8212; and that, we think, is a compliment.</p>
                     </div>
                 </div>
                 <div class="about-side-dots" id="about-side-dots">
@@ -320,26 +324,87 @@
             <div class="scroll-hint" id="about-scroll-hint">scroll to continue</div>
         </div>
 
-        <!-- CONTACT -->
+        <!-- GALLERY -->
+        <div class="stage-section" id="section-gallery">
+            <div class="section-label">Gallery</div>
+            <div class="section-heading">The Space</div>
+            <div class="gallery-layout">
+                <div class="gallery-paginator" id="gallery-paginator">
+                    <div class="gallery-page active" data-gallery-index="0"><div class="gallery-grid">
+                        <div class="gallery-cell" data-global-index="0"><img src="https://picsum.photos/seed/grounds01/600/450" alt="The Grounds" loading="lazy"></div>
+                        <div class="gallery-cell" data-global-index="1"><img src="https://picsum.photos/seed/grounds02/600/450" alt="The Grounds" loading="lazy"></div>
+                        <div class="gallery-cell" data-global-index="2"><img src="https://picsum.photos/seed/grounds03/600/450" alt="The Grounds" loading="lazy"></div>
+                        <div class="gallery-cell" data-global-index="3"><img src="https://picsum.photos/seed/grounds04/600/450" alt="The Grounds" loading="lazy"></div>
+                        <div class="gallery-cell" data-global-index="4"><img src="https://picsum.photos/seed/grounds05/600/450" alt="The Grounds" loading="lazy"></div>
+                        <div class="gallery-cell" data-global-index="5"><img src="https://picsum.photos/seed/grounds06/600/450" alt="The Grounds" loading="lazy"></div>
+                    </div></div>
+                    <div class="gallery-page" data-gallery-index="1"><div class="gallery-grid">
+                        <div class="gallery-cell" data-global-index="6"><img  src="https://picsum.photos/seed/grounds07/600/450" alt="The Grounds" loading="lazy"></div>
+                        <div class="gallery-cell" data-global-index="7"><img  src="https://picsum.photos/seed/grounds08/600/450" alt="The Grounds" loading="lazy"></div>
+                        <div class="gallery-cell" data-global-index="8"><img  src="https://picsum.photos/seed/grounds09/600/450" alt="The Grounds" loading="lazy"></div>
+                        <div class="gallery-cell" data-global-index="9"><img  src="https://picsum.photos/seed/grounds10/600/450" alt="The Grounds" loading="lazy"></div>
+                        <div class="gallery-cell" data-global-index="10"><img src="https://picsum.photos/seed/grounds11/600/450" alt="The Grounds" loading="lazy"></div>
+                        <div class="gallery-cell" data-global-index="11"><img src="https://picsum.photos/seed/grounds12/600/450" alt="The Grounds" loading="lazy"></div>
+                    </div></div>
+                </div>
+                <div class="gallery-side-dots" id="gallery-side-dots">
+                    <span class="gallery-dot active" data-gallery-index="0"></span>
+                    <span class="gallery-dot"        data-gallery-index="1"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- CONTACT
+             Email addresses are injected by JavaScript so they never
+             appear as raw text in the HTML source. This prevents
+             Cloudflare from detecting them and injecting its email-
+             decode script, which would silently break all JavaScript
+             on the page when the file is served through Live Server.
+        -->
         <div class="stage-section" id="section-contact">
             <div class="section-label">Contact</div>
             <div class="section-heading">Get In Touch</div>
-            <div class="contact-body">
-                <div class="contact-line">
-                    <span class="contact-label">Email</span>
-                    <span class="contact-value">hello@thegrounds.co</span>
+            <div class="contact-grid">
+                <div class="contact-info">
+                    <div class="contact-body">
+                        <div class="contact-line">
+                            <span class="contact-label">Email</span>
+                            <span class="contact-value" id="contact-email-main"></span>
+                        </div>
+                        <div class="contact-line">
+                            <span class="contact-label">Telephone</span>
+                            <span class="contact-value">+31 20 555 0142</span>
+                        </div>
+                        <div class="contact-line">
+                            <span class="contact-label">Instagram</span>
+                            <span class="contact-value">@thegrounds.coffee</span>
+                        </div>
+                        <div class="contact-line">
+                            <span class="contact-label">Press &amp; Wholesale</span>
+                            <span class="contact-value" id="contact-email-trade"></span>
+                        </div>
+                    </div>
                 </div>
-                <div class="contact-line">
-                    <span class="contact-label">Telephone</span>
-                    <span class="contact-value">+31 20 555 0142</span>
-                </div>
-                <div class="contact-line">
-                    <span class="contact-label">Instagram</span>
-                    <span class="contact-value">@thegrounds.coffee</span>
-                </div>
-                <div class="contact-line">
-                    <span class="contact-label">Press &amp; Wholesale</span>
-                    <span class="contact-value">trade@thegrounds.co</span>
+                <div class="contact-form-col">
+                    <div class="contact-form" id="contact-form">
+                        <div class="form-field">
+                            <label class="form-label" for="field-name">Name</label>
+                            <input class="form-input" id="field-name" type="text" placeholder="Your name" autocomplete="off">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label" for="field-email">Email</label>
+                            <input class="form-input" id="field-email" type="email" placeholder="your address" autocomplete="off">
+                        </div>
+                        <div class="form-field">
+                            <label class="form-label" for="field-message">Message</label>
+                            <textarea class="form-textarea" id="field-message" placeholder="What would you like to say?" rows="3"></textarea>
+                        </div>
+                        <button class="form-submit" id="form-submit">Send message</button>
+                    </div>
+                    <div class="form-confirm" id="form-confirm">
+                        <div class="form-confirm-title">Message received</div>
+                        <p class="form-confirm-text">Thank you for reaching out. We read every message and will be in touch shortly.</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -347,42 +412,61 @@
     </div><!-- /stage-card -->
 </main>
 
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true">
+    <button class="lightbox-close" id="lightbox-close">Close &#10005;</button>
+    <button class="lightbox-prev"  id="lightbox-prev">&#8592; Prev</button>
+    <div class="lightbox-img-wrap">
+        <img class="lightbox-img" id="lightbox-img" src="" alt="">
+        <div class="lightbox-counter" id="lightbox-counter"></div>
+    </div>
+    <button class="lightbox-next" id="lightbox-next">Next &#8594;</button>
+</div>
+
 <footer>
-    <span class="footer-note">The Grounds — Est. 2019</span>
+    <span class="footer-note">The Grounds &#8212; Est. 2019</span>
     <span class="footer-note">All rights reserved</span>
 </footer>
 
 <script>
-// ── MEASUREMENT HELPER ───────────────────────────────────────
+
+// Inject email addresses via JS so they never appear in the HTML source.
+// Cloudflare's email protection scans the raw HTML for the @ character.
+// By assembling addresses at runtime, there is nothing for it to find
+// and therefore nothing for it to inject — permanently.
+(function() {
+    var at = String.fromCharCode(64);
+    document.getElementById('contact-email-main').textContent  = 'hello'  + at + 'thegrounds.co';
+    document.getElementById('contact-email-trade').textContent = 'trade'  + at + 'thegrounds.co';
+})();
+
+// ── HELPERS ──────────────────────────────────────────────────
 function measureH(el, width) {
-    const s = el.style;
-    const prev = { pos:s.position, op:s.opacity, w:s.width, tr:s.transition, vis:s.visibility };
-    s.transition='none'; s.position='relative'; s.opacity='0'; s.visibility='hidden';
+    var s = el.style;
+    var prev = { pos:s.position, op:s.opacity, w:s.width, tr:s.transition, vis:s.visibility };
+    s.transition = 'none'; s.position = 'relative';
+    s.opacity = '0'; s.visibility = 'hidden';
     if (width != null) s.width = width + 'px';
-    const h = el.offsetHeight;
-    s.position=prev.pos; s.opacity=prev.op; s.width=prev.w; s.transition=prev.tr; s.visibility=prev.vis;
+    var h = el.offsetHeight;
+    s.position = prev.pos; s.opacity = prev.op;
+    s.width = prev.w; s.transition = prev.tr; s.visibility = prev.vis;
     return h;
 }
+var SECTION_WIDTHS = { reviews:560, location:680, about:540, gallery:740, contact:760 };
+var SECTION_PAD = 92;
+function clampW(w) { return Math.min(w, window.innerWidth * 0.92); }
 
-const SECTION_WIDTHS = { reviews:560, location:680, about:540, contact:440 };
-const SECTION_PAD    = 92;
-function clampW(w) { return Math.min(w, window.innerWidth * 0.88); }
-
-
-// ── REVIEWS SLIDESHOW ────────────────────────────────────────
-const INTERVAL         = 16100;
-const slides           = document.querySelectorAll('.review-slide');
-const slideDots        = document.querySelectorAll('#slide-dots .dot');
-const reviewsContainer = document.getElementById('reviews-container');
-let   currentSlide     = 0;
-let   slideTimer       = null;
-
-const slideW       = clampW(SECTION_WIDTHS.reviews) - SECTION_PAD;
-const slideHeights = Array.from(slides).map(s => measureH(s, slideW));
+// ── REVIEWS ──────────────────────────────────────────────────
+var INTERVAL = 16100;
+var slides = document.querySelectorAll('.review-slide');
+var slideDots = document.querySelectorAll('#slide-dots .dot');
+var reviewsContainer = document.getElementById('reviews-container');
+var currentSlide = 0, slideTimer = null;
+var slideW = clampW(SECTION_WIDTHS.reviews) - SECTION_PAD;
+var slideHeights = Array.from(slides).map(function(s) { return measureH(s, slideW); });
 reviewsContainer.style.height = slideHeights[0] + 'px';
-
 function goToSlide(index) {
-    const next = (index + slides.length) % slides.length;
+    var next = (index + slides.length) % slides.length;
     reviewsContainer.style.height = slideHeights[next] + 'px';
     slides[currentSlide].classList.remove('active');
     slideDots[currentSlide].classList.remove('active');
@@ -392,191 +476,259 @@ function goToSlide(index) {
 }
 function startAutoplay() {
     clearInterval(slideTimer);
-    slideTimer = setInterval(() => goToSlide(currentSlide + 1), INTERVAL);
+    slideTimer = setInterval(function() { goToSlide(currentSlide + 1); }, INTERVAL);
 }
-slideDots.forEach(dot => dot.addEventListener('click', () => {
-    goToSlide(parseInt(dot.dataset.index)); startAutoplay();
-}));
+slideDots.forEach(function(dot) {
+    dot.addEventListener('click', function() { goToSlide(parseInt(dot.dataset.index)); startAutoplay(); });
+});
 startAutoplay();
 
-
 // ── ABOUT PAGINATOR ──────────────────────────────────────────
-const aboutPages    = document.querySelectorAll('#about-paginator .pager-page');
-const aboutDots     = document.querySelectorAll('#about-side-dots .about-dot');
-const aboutPagEl    = document.getElementById('about-paginator');
-let   aboutIdx      = 0;
-let   aboutCooldown = false;
-
-const aboutW         = clampW(SECTION_WIDTHS.about) - SECTION_PAD - 36;
-const aboutPgHeights = Array.from(aboutPages).map(p => measureH(p, aboutW));
+var aboutPages = document.querySelectorAll('#about-paginator .pager-page');
+var aboutDots  = document.querySelectorAll('#about-side-dots .about-dot');
+var aboutPagEl = document.getElementById('about-paginator');
+var aboutIdx = 0, pagCooldown = false;
+var aboutW = clampW(SECTION_WIDTHS.about) - SECTION_PAD - 36;
+var aboutPgHeights = Array.from(aboutPages).map(function(p) { return measureH(p, aboutW); });
 aboutPagEl.style.height = aboutPgHeights[0] + 'px';
-
 function goToAboutPage(index) {
-    const next = Math.max(0, Math.min(index, aboutPages.length - 1));
+    var next = Math.max(0, Math.min(index, aboutPages.length - 1));
     if (next === aboutIdx) return;
     aboutPagEl.style.height = aboutPgHeights[next] + 'px';
-    aboutPages[aboutIdx].classList.remove('active');
-    aboutDots[aboutIdx].classList.remove('active');
+    aboutPages[aboutIdx].classList.remove('active'); aboutDots[aboutIdx].classList.remove('active');
     aboutIdx = next;
-    aboutPages[aboutIdx].classList.add('active');
-    aboutDots[aboutIdx].classList.add('active');
+    aboutPages[aboutIdx].classList.add('active'); aboutDots[aboutIdx].classList.add('active');
 }
-aboutDots.forEach(dot => dot.addEventListener('click', () =>
-    goToAboutPage(parseInt(dot.getAttribute('data-about-index')))
-));
-window.addEventListener('wheel', (e) => {
-    if (currentSection !== 'about') return;
-    if (aboutCooldown) return;
-    aboutCooldown = true;
-    setTimeout(() => { aboutCooldown = false; }, 800);
-    goToAboutPage(e.deltaY > 0 ? aboutIdx + 1 : aboutIdx - 1);
+aboutDots.forEach(function(dot) {
+    dot.addEventListener('click', function() { goToAboutPage(parseInt(dot.getAttribute('data-about-index'))); });
+});
+
+// ── GALLERY PAGINATOR ────────────────────────────────────────
+var galleryImages = [
+    { src:'https://picsum.photos/seed/grounds01/1200/900', alt:'The Grounds' },
+    { src:'https://picsum.photos/seed/grounds02/1200/900', alt:'The Grounds' },
+    { src:'https://picsum.photos/seed/grounds03/1200/900', alt:'The Grounds' },
+    { src:'https://picsum.photos/seed/grounds04/1200/900', alt:'The Grounds' },
+    { src:'https://picsum.photos/seed/grounds05/1200/900', alt:'The Grounds' },
+    { src:'https://picsum.photos/seed/grounds06/1200/900', alt:'The Grounds' },
+    { src:'https://picsum.photos/seed/grounds07/1200/900', alt:'The Grounds' },
+    { src:'https://picsum.photos/seed/grounds08/1200/900', alt:'The Grounds' },
+    { src:'https://picsum.photos/seed/grounds09/1200/900', alt:'The Grounds' },
+    { src:'https://picsum.photos/seed/grounds10/1200/900', alt:'The Grounds' },
+    { src:'https://picsum.photos/seed/grounds11/1200/900', alt:'The Grounds' },
+    { src:'https://picsum.photos/seed/grounds12/1200/900', alt:'The Grounds' }
+];
+var galleryPages = document.querySelectorAll('#gallery-paginator .gallery-page');
+var galleryDots  = document.querySelectorAll('#gallery-side-dots .gallery-dot');
+var galleryPagEl = document.getElementById('gallery-paginator');
+var galleryPageIdx = 0;
+var galleryW = clampW(SECTION_WIDTHS.gallery) - SECTION_PAD - 36;
+var galleryPgHeights = Array.from(galleryPages).map(function(p) { return measureH(p, galleryW); });
+galleryPagEl.style.height = galleryPgHeights[0] + 'px';
+function goToGalleryPage(index) {
+    var next = Math.max(0, Math.min(index, galleryPages.length - 1));
+    if (next === galleryPageIdx) return;
+    galleryPagEl.style.height = galleryPgHeights[next] + 'px';
+    galleryPages[galleryPageIdx].classList.remove('active'); galleryDots[galleryPageIdx].classList.remove('active');
+    galleryPageIdx = next;
+    galleryPages[galleryPageIdx].classList.add('active'); galleryDots[galleryPageIdx].classList.add('active');
+}
+galleryDots.forEach(function(dot) {
+    dot.addEventListener('click', function() { goToGalleryPage(parseInt(dot.getAttribute('data-gallery-index'))); });
+});
+document.querySelectorAll('.gallery-cell').forEach(function(cell) {
+    cell.addEventListener('click', function() { openLightbox(parseInt(cell.dataset.globalIndex)); });
+});
+
+// ── SCROLL WHEEL ─────────────────────────────────────────────
+window.addEventListener('wheel', function(e) {
+    if (pagCooldown) return;
+    if (currentSection === 'about') {
+        pagCooldown = true; setTimeout(function() { pagCooldown = false; }, 800);
+        goToAboutPage(e.deltaY > 0 ? aboutIdx + 1 : aboutIdx - 1);
+    } else if (currentSection === 'gallery') {
+        pagCooldown = true; setTimeout(function() { pagCooldown = false; }, 800);
+        goToGalleryPage(e.deltaY > 0 ? galleryPageIdx + 1 : galleryPageIdx - 1);
+    }
 }, { passive: true });
 
+// ── LIGHTBOX ─────────────────────────────────────────────────
+var lightbox        = document.getElementById('lightbox');
+var lightboxImg     = document.getElementById('lightbox-img');
+var lightboxCounter = document.getElementById('lightbox-counter');
+var lightboxClose   = document.getElementById('lightbox-close');
+var lightboxPrev    = document.getElementById('lightbox-prev');
+var lightboxNext    = document.getElementById('lightbox-next');
+var currentLightboxIndex = 0;
+function openLightbox(index) {
+    currentLightboxIndex = index; loadLightboxImage(index);
+    lightbox.classList.add('visible'); document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+    lightbox.classList.remove('visible'); document.body.style.overflow = '';
+    lightboxImg.classList.remove('loaded'); lightboxImg.src = '';
+}
+function loadLightboxImage(index) {
+    var data = galleryImages[index];
+    lightboxImg.classList.remove('loaded'); lightboxImg.alt = data.alt;
+    lightboxCounter.textContent = (index + 1) + ' / ' + galleryImages.length;
+    lightboxPrev.classList.toggle('hidden', index === 0);
+    lightboxNext.classList.toggle('hidden', index === galleryImages.length - 1);
+    var tmp = new Image();
+    tmp.onload = function() {
+        lightboxImg.src = data.src;
+        requestAnimationFrame(function() { requestAnimationFrame(function() { lightboxImg.classList.add('loaded'); }); });
+    };
+    tmp.src = data.src;
+}
+function navigateLightbox(delta) {
+    var next = currentLightboxIndex + delta;
+    if (next < 0 || next >= galleryImages.length) return;
+    currentLightboxIndex = next; loadLightboxImage(next);
+}
+lightboxClose.addEventListener('click', closeLightbox);
+lightboxPrev.addEventListener('click', function() { navigateLightbox(-1); });
+lightboxNext.addEventListener('click', function() { navigateLightbox(+1); });
+lightbox.addEventListener('click', function(e) { if (e.target === lightbox) closeLightbox(); });
+document.addEventListener('keydown', function(e) {
+    if (!lightbox.classList.contains('visible')) return;
+    if (e.key === 'Escape')     closeLightbox();
+    if (e.key === 'ArrowLeft')  navigateLightbox(-1);
+    if (e.key === 'ArrowRight') navigateLightbox(+1);
+});
+
+// ── CONTACT FORM ─────────────────────────────────────────────
+document.getElementById('form-submit').addEventListener('click', function() {
+    var form    = document.getElementById('contact-form');
+    var confirm = document.getElementById('form-confirm');
+    form.style.transition = 'opacity 0.6s ease'; form.style.opacity = '0';
+    setTimeout(function() {
+        form.style.display = 'none';
+        confirm.classList.add('visible');
+        confirm.style.opacity = '0'; confirm.style.transition = 'opacity 0.8s ease';
+        requestAnimationFrame(function() { confirm.style.opacity = '1'; });
+    }, 600);
+});
 
 // ── STAGE NAVIGATION ─────────────────────────────────────────
-const stageCard   = document.getElementById('stage-card');
-const navLinks    = document.querySelectorAll('.nav-link');
-const allSections = document.querySelectorAll('.stage-section');
-
-const sectionHeights = {};
-const sectionNodes   = {};
-allSections.forEach(section => {
-    const id = section.id.replace('section-', '');
-    const w  = clampW(SECTION_WIDTHS[id] || 540);
+var stageCard   = document.getElementById('stage-card');
+var navLinks    = document.querySelectorAll('.nav-link');
+var allSections = document.querySelectorAll('.stage-section');
+var sectionHeights = {}, sectionNodes = {};
+allSections.forEach(function(section) {
+    var id = section.id.replace('section-', '');
+    var w  = clampW(SECTION_WIDTHS[id] || 540);
     sectionHeights[id] = measureH(section, w);
     sectionNodes[id]   = section;
 });
-
-let currentSection = 'reviews';
-let isAnimating    = false;
-
+var currentSection = 'reviews', isAnimating = false;
 stageCard.style.transition = 'none';
 stageCard.style.width  = clampW(SECTION_WIDTHS.reviews) + 'px';
 stageCard.style.height = sectionHeights.reviews + 'px';
-requestAnimationFrame(() => { stageCard.style.transition = ''; });
-
+requestAnimationFrame(function() { stageCard.style.transition = ''; });
 function goToSection(incoming) {
     if (incoming === currentSection || isAnimating) return;
     isAnimating = true;
     sectionNodes[currentSection].classList.remove('active');
-    setTimeout(() => {
+    setTimeout(function() {
         stageCard.style.width  = clampW(SECTION_WIDTHS[incoming] || 540) + 'px';
         stageCard.style.height = sectionHeights[incoming] + 'px';
-        setTimeout(() => {
+        setTimeout(function() {
             sectionNodes[incoming].classList.add('active');
-            currentSection = incoming;
-            isAnimating    = false;
+            currentSection = incoming; isAnimating = false;
             if (incoming === 'about') {
-                const hint = document.getElementById('about-scroll-hint');
-                hint.style.animation = 'none';
-                void hint.offsetWidth;
-                hint.style.animation = '';
+                var hint = document.getElementById('about-scroll-hint');
+                hint.style.animation = 'none'; void hint.offsetWidth; hint.style.animation = '';
             }
         }, 950);
     }, 400);
 }
-
-navLinks.forEach(link => link.addEventListener('click', () => {
-    navLinks.forEach(l => l.classList.remove('active'));
-    link.classList.add('active');
-    goToSection(link.dataset.section);
-}));
-
-window.addEventListener('resize', () => {
+navLinks.forEach(function(link) {
+    link.addEventListener('click', function() {
+        navLinks.forEach(function(l) { l.classList.remove('active'); });
+        link.classList.add('active'); goToSection(link.dataset.section);
+    });
+});
+window.addEventListener('resize', function() {
     stageCard.style.transition = 'none';
     stageCard.style.width  = clampW(SECTION_WIDTHS[currentSection]) + 'px';
     stageCard.style.height = sectionHeights[currentSection] + 'px';
-    requestAnimationFrame(() => { stageCard.style.transition = ''; });
+    requestAnimationFrame(function() { stageCard.style.transition = ''; });
 });
 
-
 // ── AIZAWA ATTRACTOR ─────────────────────────────────────────
-const A_a=0.95, A_b=0.7, A_c=0.6, A_d=3.5, A_e=0.25, A_f=0.1;
-const dt=0.004, NOISE=0.004;
-
-const canvas = document.getElementById('attractor-canvas');
-const ctx    = canvas.getContext('2d');
-
-function resizeCanvas() { canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight; }
-
-function aizawaDerivatives(x,y,z) {
+var A_a=0.95, A_b=0.7, A_c=0.6, A_d=3.5, A_e=0.25, A_f=0.1;
+var dt=0.004, NOISE=0.004;
+var canvas = document.getElementById('attractor-canvas');
+var ctx = canvas.getContext('2d');
+function resizeCanvas() { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; }
+function aizawa(x,y,z) {
     return {
         dx: (z-A_b)*x - A_d*y,
         dy: A_d*x + (z-A_b)*y,
         dz: A_c + A_a*z - (z*z*z)/3 - (x*x+y*y)*(1+A_e*z) + A_f*z*x*x*x
     };
 }
-
-function rk4Step(x,y,z,addNoise=false) {
-    const k1=aizawaDerivatives(x,y,z);
-    const k2=aizawaDerivatives(x+k1.dx*dt/2, y+k1.dy*dt/2, z+k1.dz*dt/2);
-    const k3=aizawaDerivatives(x+k2.dx*dt/2, y+k2.dy*dt/2, z+k2.dz*dt/2);
-    const k4=aizawaDerivatives(x+k3.dx*dt,   y+k3.dy*dt,   z+k3.dz*dt  );
-    const nx=x+(k1.dx+2*k2.dx+2*k3.dx+k4.dx)*dt/6;
-    const ny=y+(k1.dy+2*k2.dy+2*k3.dy+k4.dy)*dt/6;
-    const nz=z+(k1.dz+2*k2.dz+2*k3.dz+k4.dz)*dt/6;
-    if (!addNoise) return {x:nx,y:ny,z:nz};
-    const n=()=>(Math.random()*2-1)*NOISE;
+function rk4(x,y,z,noise) {
+    var k1=aizawa(x,y,z);
+    var k2=aizawa(x+k1.dx*dt/2, y+k1.dy*dt/2, z+k1.dz*dt/2);
+    var k3=aizawa(x+k2.dx*dt/2, y+k2.dy*dt/2, z+k2.dz*dt/2);
+    var k4=aizawa(x+k3.dx*dt,   y+k3.dy*dt,   z+k3.dz*dt);
+    var nx=x+(k1.dx+2*k2.dx+2*k3.dx+k4.dx)*dt/6;
+    var ny=y+(k1.dy+2*k2.dy+2*k3.dy+k4.dy)*dt/6;
+    var nz=z+(k1.dz+2*k2.dz+2*k3.dz+k4.dz)*dt/6;
+    if (!noise) return {x:nx,y:ny,z:nz};
+    function n() { return (Math.random()*2-1)*NOISE; }
     return {x:nx+n(),y:ny+n(),z:nz+n()};
 }
-
-let rotY=0;
-const ROT_SPEED=0.00018, TILT=0.42;
-
+var rotY=0, ROT_SPEED=0.00018, TILT=0.42;
 function project(x,y,z) {
-    const cosY=Math.cos(rotY), sinY=Math.sin(rotY);
-    const rx= x*cosY+z*sinY, ry=y, rz=-x*sinY+z*cosY;
-    const cosX=Math.cos(TILT), sinX=Math.sin(TILT);
-    const fx=rx, fy=ry*cosX-rz*sinX;
-    const cx=canvas.width/2, cy=canvas.height/2;
-    const scale=Math.min(canvas.width,canvas.height)/3.4;
-    return { px:cx+fx*scale, py:cy-fy*scale };
+    var cy=Math.cos(rotY), sy=Math.sin(rotY);
+    var rx=x*cy+z*sy, ry=y, rz=-x*sy+z*cy;
+    var cx2=Math.cos(TILT), sx2=Math.sin(TILT);
+    var fx=rx, fy=ry*cx2-rz*sx2;
+    var scale=Math.min(canvas.width,canvas.height)/3.4;
+    return { px:canvas.width/2+fx*scale, py:canvas.height/2-fy*scale };
 }
-
-const HALO_R=7.0;
-function drawParticle(cx,cy,alpha) {
-    const grad=ctx.createRadialGradient(cx,cy,0,cx,cy,HALO_R);
-    grad.addColorStop(0,    `hsla(28,65%,38%,${alpha.toFixed(2)})`);
-    grad.addColorStop(0.25, `hsla(28,55%,45%,${(alpha*0.55).toFixed(2)})`);
-    grad.addColorStop(0.6,  `hsla(28,45%,50%,${(alpha*0.18).toFixed(2)})`);
-    grad.addColorStop(1.0,  `hsla(28,40%,55%,0)`);
-    ctx.beginPath();
-    ctx.arc(cx,cy,HALO_R,0,Math.PI*2);
-    ctx.fillStyle=grad; ctx.fill();
+var HALO_R=7.0;
+function drawParticle(px,py,alpha) {
+    var g=ctx.createRadialGradient(px,py,0,px,py,HALO_R);
+    g.addColorStop(0,   'hsla(28,65%,38%,'+alpha.toFixed(2)+')');
+    g.addColorStop(0.25,'hsla(28,55%,45%,'+(alpha*0.55).toFixed(2)+')');
+    g.addColorStop(0.6, 'hsla(28,45%,50%,'+(alpha*0.18).toFixed(2)+')');
+    g.addColorStop(1.0, 'hsla(28,40%,55%,0)');
+    ctx.beginPath(); ctx.arc(px,py,HALO_R,0,Math.PI*2);
+    ctx.fillStyle=g; ctx.fill();
 }
-
-const PARTICLE_COUNT=220;
-const particles=[];
+var particles=[];
 function initParticles() {
-    particles.length=0;
-    let x=0.1,y=0.0,z=0.0;
-    for (let i=0;i<600;i++) ({x,y,z}=rk4Step(x,y,z));
-    for (let i=0;i<PARTICLE_COUNT;i++) {
-        for (let j=0;j<30;j++) ({x,y,z}=rk4Step(x,y,z));
-        particles.push({x,y,z});
+    particles=[];
+    var x=0.1,y=0,z=0,r;
+    for (var i=0;i<600;i++) { r=rk4(x,y,z,false); x=r.x;y=r.y;z=r.z; }
+    for (var i=0;i<220;i++) {
+        for (var j=0;j<30;j++) { r=rk4(x,y,z,false); x=r.x;y=r.y;z=r.z; }
+        particles.push({x:x,y:y,z:z});
     }
 }
-
 function animate() {
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    rotY+=ROT_SPEED;
-    for (const p of particles) {
-        const next=rk4Step(p.x,p.y,p.z,true);
-        p.x=next.x; p.y=next.y; p.z=next.z;
-        const d=aizawaDerivatives(p.x,p.y,p.z);
-        const spd=Math.sqrt(d.dx*d.dx+d.dy*d.dy+d.dz*d.dz);
-        const t=Math.min(spd/6,1);
-        const alpha=0.30+t*0.50;
-        const {px,py}=project(p.x,p.y,p.z);
-        drawParticle(px,py,alpha);
+    rotY += ROT_SPEED;
+    for (var i=0;i<particles.length;i++) {
+        var p=particles[i], r=rk4(p.x,p.y,p.z,true);
+        p.x=r.x; p.y=r.y; p.z=r.z;
+        var d=aizawa(p.x,p.y,p.z);
+        var spd=Math.sqrt(d.dx*d.dx+d.dy*d.dy+d.dz*d.dz);
+        var alpha=0.30+Math.min(spd/6,1)*0.50;
+        var proj=project(p.x,p.y,p.z);
+        drawParticle(proj.px,proj.py,alpha);
     }
     requestAnimationFrame(animate);
 }
-
-window.addEventListener('resize',resizeCanvas);
+window.addEventListener('resize', resizeCanvas);
 resizeCanvas();
 initParticles();
 requestAnimationFrame(animate);
+
 </script>
 </body>
 </html>
