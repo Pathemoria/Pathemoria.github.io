@@ -15,60 +15,203 @@
             --amber:     #b5742a;
             --rule:      rgba(26, 18, 9, 0.10);
             --card-bg:   rgba(253, 248, 240, 0.15);
+            --sidebar-w: 160px;
         }
         html, body { height: 100%; }
         body {
-            display: flex; flex-direction: column; min-height: 100vh;
+            /* Horizontal flex: sidebar | page-body */
+            display: flex; flex-direction: row;
+            min-height: 100vh;
             font-family: 'Lora', Georgia, serif;
             background-color: var(--parchment); color: var(--ink);
+            overflow: hidden; /* prevent scroll — everything lives in 100vh */
         }
 
-        /* ENTRANCE ANIMATIONS
-           canvasFadeIn ends at 0.45 to match the intended canvas opacity.
-           All elements held at opacity:0 before their delay by fill-mode:both. */
+        /* ── ENTRANCE ANIMATIONS ──────────────────────────────────
+           canvasFadeIn ends at 0.45 (not 1.0) to match the intended
+           canvas opacity without fighting a static rule.
+           fill-mode:both holds each element at opacity:0 before its
+           individual delay fires, so nothing flashes in at load. */
         @keyframes fadeIn       { from{opacity:0} to{opacity:1} }
         @keyframes canvasFadeIn { from{opacity:0} to{opacity:0.45} }
-        @keyframes headerIn     { from{opacity:0;transform:translateY(-4px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes cardIn       { from{opacity:0;transform:translateY(10px)}  to{opacity:1;transform:translateY(0)} }
-        #attractor-canvas         { animation: canvasFadeIn 2.0s ease 0.4s both; }
-        header                    { animation: headerIn     1.0s ease 0.9s both; }
-        .nav-link:nth-child(1)    { animation: fadeIn       0.7s ease 1.3s both; }
-        .nav-link:nth-child(2)    { animation: fadeIn       0.7s ease 1.5s both; }
-        .nav-link:nth-child(3)    { animation: fadeIn       0.7s ease 1.7s both; }
-        .nav-link:nth-child(4)    { animation: fadeIn       0.7s ease 1.9s both; }
-        .nav-link:nth-child(5)    { animation: fadeIn       0.7s ease 2.1s both; }
-        .stage-card               { animation: cardIn 1.4s cubic-bezier(0.25,0,0.2,1) 1.6s both; }
-        footer                    { animation: fadeIn       1.0s ease 2.2s both; }
+        @keyframes cardIn       { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes sidebarIn    { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
 
-        /* HEADER */
-        header {
-            padding: 18px 48px; border-bottom: 1px solid var(--rule);
-            display: flex; align-items: center; justify-content: space-between;
+        /* Canvas fades in first — the world arrives before the interface. */
+        #attractor-canvas      { animation: canvasFadeIn 2.0s ease 0.4s both; }
+        /* Sidebar slides in from the left as a unit. */
+        .sidebar               { animation: sidebarIn   1.0s ease 0.8s both; }
+        /* Nav links stagger inside the already-visible sidebar. */
+        .nav-link:nth-child(1) { animation: fadeIn 0.6s ease 1.2s both; }
+        .nav-link:nth-child(2) { animation: fadeIn 0.6s ease 1.4s both; }
+        .nav-link:nth-child(3) { animation: fadeIn 0.6s ease 1.6s both; }
+        .nav-link:nth-child(4) { animation: fadeIn 0.6s ease 1.8s both; }
+        .nav-link:nth-child(5) { animation: fadeIn 0.6s ease 2.0s both; }
+        .stage-card            { animation: cardIn 1.4s cubic-bezier(0.25,0,0.2,1) 1.6s both; }
+        footer                 { animation: fadeIn 1.0s ease 2.2s both; }
+
+        /* ── SIDEBAR ──────────────────────────────────────────────
+           Three intentional vertical zones keep the sidebar from
+           feeling like a list that ran out of items:
+             1. .site-name  — pinned to the top (flex-shrink:0)
+             2. .nav-zone   — fills the middle space (flex:1),
+                              then centers the nav within it
+             3. ::after decoration — anchored to bottom (absolute)
+           The emptiness above and below the nav becomes structured
+           breathing room — the NieR approach, not an accident. */
+        .sidebar {
             position: relative; z-index: 10;
+            width: var(--sidebar-w); min-height: 100vh; flex-shrink: 0;
+            display: flex; flex-direction: column;
+            padding: 0;
+            border-right: 1px solid var(--rule);
+            /* Dot-matrix stipple: 1px dots on a 6px grid —
+               the most recognisable NieR panel surface texture. */
+            background-color: rgba(244, 239, 230, 0.08);
+            background-image: radial-gradient(circle, rgba(26,18,9,0.09) 1px, transparent 1px);
+            background-size: 6px 6px;
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            overflow: hidden;
         }
-        .site-name { font-family: 'Special Elite', monospace; font-size: 1.25rem; letter-spacing: 0.12em; text-transform: uppercase; }
-        nav { display: flex; gap: 32px; }
+
+        /* Three stacked decreasing-width lines — document closure mark.
+           Absolutely positioned so it always sits at a fixed distance
+           from the bottom, independent of how flex zones distribute space. */
+        .sidebar::after {
+            content: ''; position: absolute;
+            bottom: 36px; left: 24px; right: 0;
+            height: 11px;
+            background-image:
+                linear-gradient(to right, rgba(26,18,9,0.25) 54px, transparent 54px),
+                linear-gradient(to right, rgba(26,18,9,0.16) 36px, transparent 36px),
+                linear-gradient(to right, rgba(26,18,9,0.09) 20px, transparent 20px);
+            background-size: 100% 1px;
+            background-repeat: no-repeat;
+            background-position: 0 0, 0 5px, 0 10px;
+            pointer-events: none;
+        }
+
+        /* Zone 1: Site name, pinned to top with fixed padding.
+           The double ruled separator gives it weight as a document
+           header — a primary full-width border + a shorter secondary
+           line offset below it, like a typewritten double-underline. */
+        .site-name {
+            font-family: 'Special Elite', monospace;
+            font-size: 0.72rem; letter-spacing: 0.22em;
+            text-transform: uppercase; line-height: 1.55;
+            opacity: 0.90; flex-shrink: 0;
+            padding: 36px 0 20px 24px;
+            border-bottom: 1px solid rgba(26,18,9,0.12);
+            position: relative;
+        }
+        .site-name::after {
+            content: '';
+            position: absolute; bottom: -4px; left: 24px;
+            width: 38%; height: 1px;
+            background: rgba(26,18,9,0.07);
+        }
+
+        /* Zone 2: Nav wrapper expands to fill all vertical space between
+           the site name and the bottom decoration, then centers the nav
+           list within that space. The 80px bottom padding ensures the
+           nav block never overlaps the absolutely-positioned closure mark. */
+        .nav-zone {
+            flex: 1;
+            display: flex; flex-direction: column;
+            justify-content: center;
+            padding-bottom: 80px;
+        }
+
+        /* Opening hairline above the nav block — the ledger column's
+           starting rule, paired with the closing lines at the bottom. */
+        .nav-zone::before {
+            content: '';
+            display: block;
+            width: 54px; height: 1px;
+            background: rgba(26,18,9,0.14);
+            margin: 0 0 4px 24px;
+        }
+
+        nav { display: flex; flex-direction: column; gap: 0; }
+
+        /* Each item is a full-width ledger row. Padding increased from
+           10px to 16px so rows have enough vertical mass to read as
+           entries in a printed register — at this height the hairline
+           borders become the primary structural rhythm. */
         nav a {
-            font-family: 'Special Elite', monospace; font-size: 0.7rem;
-            letter-spacing: 0.18em; text-transform: uppercase;
-            text-decoration: none; color: var(--ink); opacity: 0.45;
-            transition: opacity 0.2s ease; cursor: pointer;
+            font-family: 'Special Elite', monospace; font-size: 0.62rem;
+            letter-spacing: 0.20em; text-transform: uppercase;
+            text-decoration: none; color: var(--ink);
+            opacity: 0.28; cursor: pointer;
+            padding: 16px 14px 16px 26px;
+            border-left: 2px solid transparent;
+            border-bottom: 1px solid rgba(26,18,9,0.05);
+            display: flex; align-items: center; gap: 8px;
+            background-color: transparent;
+            transition: opacity 0.22s ease,
+                        background-color 0.22s ease,
+                        border-color 0.22s ease;
+            white-space: nowrap;
         }
-        nav a:hover  { opacity: 0.85; }
-        nav a.active { opacity: 1; }
+        /* ▪ marker in normal flex flow (not absolute) so all items'
+           text stays at the same X position regardless of visibility. */
+        nav a::before {
+            content: '▪';
+            font-size: 0.42rem; line-height: 1;
+            color: var(--amber); opacity: 0;
+            flex-shrink: 0; margin-top: 1px;
+            transition: opacity 0.22s ease;
+        }
 
-        /* MAIN */
-        main { flex: 1; position: relative; overflow: hidden; display: grid; place-items: center; }
-        #attractor-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+        nav a:hover              { opacity: 0.65; }
+        nav a:hover::before      { opacity: 0.35; }
 
-        /* STAGE CARD */
+        nav a.active {
+            opacity: 1;
+            background-color: rgba(26,18,9,0.07);
+            border-left-color: var(--amber);
+        }
+        nav a.active::before     { opacity: 1; }
+
+        /* ── PAGE BODY ────────────────────────────────────────────
+           The right-hand column takes all remaining width and stacks
+           main + footer vertically, exactly as before. */
+        .page-body {
+            flex: 1; display: flex; flex-direction: column;
+            min-height: 100vh; position: relative; z-index: 1;
+            min-width: 0; /* prevent flex blowout on narrow viewports */
+        }
+
+        /* ── CANVAS ───────────────────────────────────────────────
+           Fixed positioning lets the attractor cover the full viewport —
+           it breathes behind the sidebar too, which is what gives the
+           interface that atmospheric depth. The previous design clipped
+           it to just the main area; this feels much more alive. */
+        #attractor-canvas {
+            position: fixed; inset: 0;
+            width: 100%; height: 100%;
+            z-index: 0; pointer-events: none;
+        }
+
+        /* ── MAIN ─────────────────────────────────────────────────
+           No longer needs overflow:hidden (canvas isn't a child).
+           Still a grid so the stage card centers naturally. */
+        main {
+            flex: 1; position: relative;
+            display: grid; place-items: center;
+            z-index: 1;
+        }
+
+        /* ── STAGE CARD ───────────────────────────────────────────
+           Unchanged — same frosted glass, same animated transitions. */
         .stage-card {
-            position: relative; z-index: 1;
+            position: relative; z-index: 2;
             background: var(--card-bg);
             backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
             border: 1px solid rgba(26,18,9,0.10); border-radius: 2px;
             overflow: hidden;
-            transition: width 0.75s cubic-bezier(0.4,0,0.2,1), height 0.90s cubic-bezier(0.4,0,0.2,1);
+            transition: width 0.75s cubic-bezier(0.4,0,0.2,1),
+                        height 0.90s cubic-bezier(0.4,0,0.2,1);
         }
         .stage-section {
             position: absolute; top: 0; left: 0; right: 0;
@@ -76,11 +219,12 @@
             opacity: 0; transition: opacity 1.0s ease; pointer-events: none;
         }
         .stage-section.active { opacity: 1; pointer-events: auto; }
-        /* Explicitly block all descendants of inactive sections.
-           pointer-events:none on a parent is NOT inherited in HTML —
-           children default to auto independently, causing ghost clicks.
-           This rule propagates the block to every nested element. */
+        /* Propagate the pointer-events block to ALL descendants.
+           pointer-events:none on a parent is not inherited in HTML —
+           children default to auto independently, causing ghost clicks
+           on invisible content from other sections. */
         .stage-section:not(.active) * { pointer-events: none !important; }
+
         .section-label {
             position: absolute; top: 14px; right: 18px;
             font-family: 'Special Elite', monospace; font-size: 0.6rem;
@@ -88,13 +232,25 @@
             color: var(--amber); opacity: 0.75;
             display: flex; align-items: center; gap: 6px;
         }
-        .live-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--amber); animation: pulse 2.4s ease-in-out infinite; }
-        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.3;transform:scale(0.75)} }
-        .section-heading { font-family: 'Special Elite', monospace; font-size: 1.0rem; letter-spacing: 0.10em; text-transform: uppercase; opacity: 0.85; padding-bottom: 12px; margin-bottom: 22px; border-bottom: 1px solid var(--rule); }
+        .live-dot {
+            width: 5px; height: 5px; border-radius: 50%;
+            background: var(--amber);
+            animation: pulse 2.4s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%,100%{opacity:1;transform:scale(1)}
+            50%{opacity:0.3;transform:scale(0.75)}
+        }
+        .section-heading {
+            font-family: 'Special Elite', monospace; font-size: 1.0rem;
+            letter-spacing: 0.10em; text-transform: uppercase; opacity: 0.85;
+            padding-bottom: 12px; margin-bottom: 22px;
+            border-bottom: 1px solid var(--rule);
+        }
 
-        /* REVIEWS */
-        .reviews-container { position: relative; overflow: hidden; transition: height 0.85s cubic-bezier(0.4,0,0.2,1); }
-        .review-slide { position: absolute; top:0; left:0; right:0; opacity:0; transition: opacity 1.1s ease; pointer-events:none; }
+        /* ── REVIEWS ──────────────────────────────────────────────*/
+        .reviews-container { position:relative; overflow:hidden; transition:height 0.85s cubic-bezier(0.4,0,0.2,1); }
+        .review-slide { position:absolute; top:0; left:0; right:0; opacity:0; transition:opacity 1.1s ease; pointer-events:none; }
         .review-slide.active { opacity:1; pointer-events:auto; }
         .stars { display:flex; gap:3px; margin-bottom:16px; }
         .star       { font-size:1rem; color:var(--amber); }
@@ -108,7 +264,7 @@
         .dot { width:20px; height:2px; border-radius:1px; background:var(--ink); opacity:0.18; transition:opacity 0.4s ease, width 0.4s ease; cursor:pointer; }
         .dot.active { width:30px; opacity:0.45; }
 
-        /* LOCATION */
+        /* ── LOCATION ─────────────────────────────────────────────*/
         .location-grid { display:grid; grid-template-columns:1fr 1fr; gap:24px; align-items:start; }
         .location-map  { width:100%; height:210px; border:1px solid var(--rule); overflow:hidden; }
         .location-map iframe { width:100%; height:100%; border:none; display:block; filter:sepia(0.3) contrast(0.92) brightness(1.02); }
@@ -122,7 +278,7 @@
         .hours-table td:last-child { text-align:right; opacity:0.50; }
         .hours-table tr + tr td { border-top:1px solid var(--rule); }
 
-        /* ABOUT */
+        /* ── ABOUT ────────────────────────────────────────────────*/
         .about-layout { display:flex; align-items:center; gap:18px; }
         .about-layout .paginator { flex:1; min-width:0; }
         .about-side-dots { display:flex; flex-direction:column; gap:8px; align-items:center; flex-shrink:0; }
@@ -142,7 +298,7 @@
         }
         @keyframes hintFade { 0%{opacity:0} 20%{opacity:0.28} 70%{opacity:0.28} 100%{opacity:0} }
 
-        /* GALLERY */
+        /* ── GALLERY ──────────────────────────────────────────────*/
         .gallery-layout { display:flex; align-items:flex-start; gap:18px; }
         .gallery-layout .gallery-paginator { flex:1; min-width:0; }
         .gallery-paginator { position:relative; overflow:hidden; transition:height 0.75s cubic-bezier(0.4,0,0.2,1); }
@@ -156,7 +312,7 @@
         .gallery-dot { width:2px; height:16px; border-radius:1px; background:var(--ink); opacity:0.18; cursor:pointer; transition:height 0.45s ease, opacity 0.4s ease; }
         .gallery-dot.active { height:28px; opacity:0.52; }
 
-        /* LIGHTBOX */
+        /* ── LIGHTBOX ─────────────────────────────────────────────*/
         .lightbox { position:fixed; inset:0; z-index:100; background:rgba(18,12,6,0.92); display:flex; align-items:center; justify-content:center; opacity:0; pointer-events:none; transition:opacity 0.4s ease; }
         .lightbox.visible { opacity:1; pointer-events:auto; }
         .lightbox-img-wrap { position:relative; max-width:90vw; max-height:85vh; display:flex; align-items:center; justify-content:center; }
@@ -171,7 +327,7 @@
         .lightbox-prev:hover, .lightbox-next:hover { opacity:0.9; }
         .lightbox-prev.hidden, .lightbox-next.hidden { opacity:0; pointer-events:none; }
 
-        /* CONTACT */
+        /* ── CONTACT ──────────────────────────────────────────────*/
         .contact-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; }
         .contact-info { padding-right:36px; border-right:1px solid var(--rule); }
         .contact-form-col { padding-left:36px; }
@@ -196,26 +352,51 @@
         .form-confirm-title { font-family:'Special Elite',monospace; font-size:0.75rem; letter-spacing:0.14em; text-transform:uppercase; color:var(--amber); opacity:0.85; }
         .form-confirm-text { font-size:0.92rem; line-height:1.75; font-style:italic; opacity:0.65; }
 
-        /* FOOTER */
-        footer { padding:16px 48px; border-top:1px solid var(--rule); display:flex; justify-content:space-between; align-items:center; position:relative; z-index:10; }
+        /* ── FOOTER ───────────────────────────────────────────────*/
+        footer {
+            padding: 14px 48px;
+            border-top: 1px solid var(--rule);
+            display: flex; justify-content: space-between; align-items: center;
+            position: relative; z-index: 2;
+        }
         .footer-note { font-family:'Special Elite',monospace; font-size:0.6rem; letter-spacing:0.14em; text-transform:uppercase; opacity:0.3; }
 
-        /* RESPONSIVE */
-        @media (max-width:700px) {
-            header { padding:14px 20px; } nav { gap:18px; } footer { padding:14px 20px; }
-            .stage-section { padding:32px 28px 28px 28px; }
-            .location-grid { grid-template-columns:1fr; }
-            .gallery-grid  { grid-template-columns:repeat(2,1fr); }
-            .contact-grid  { grid-template-columns:1fr; }
+        /* ── RESPONSIVE ───────────────────────────────────────────
+           Below 700px the sidebar folds into a compact top strip.
+           The nav items go horizontal and the site name shrinks or
+           hides to preserve space. */
+        @media (max-width: 700px) {
+            body { flex-direction: column; overflow: auto; }
+            .sidebar {
+                width: 100%; min-height: auto;
+                flex-direction: row; align-items: center;
+                padding: 14px 20px;
+                border-right: none; border-bottom: 1px solid var(--rule);
+            }
+            .site-name { margin-bottom: 0; margin-right: 24px; font-size: 0.65rem; }
+            .nav-zone { flex-direction: row; align-items: center; padding-bottom: 0; }
+            .nav-zone::before { display: none; }
+            nav { flex-direction: row; gap: 20px; }
+            nav a { padding: 4px 0; border-left: none; border-bottom: 2px solid transparent; white-space: nowrap; }
+            nav a.active { border-bottom-color: var(--amber); border-left-color: transparent; }
+            nav::after { display: none; }
+            .page-body { min-height: 0; }
+            .stage-section { padding: 32px 28px 28px 28px; }
+            .location-grid { grid-template-columns: 1fr; }
+            .gallery-grid  { grid-template-columns: repeat(2,1fr); }
+            .contact-grid  { grid-template-columns: 1fr; }
             .contact-info  { padding-right:0; border-right:none; border-bottom:1px solid var(--rule); padding-bottom:20px; margin-bottom:20px; }
             .contact-form-col { padding-left:0; }
+            footer { padding: 14px 20px; }
         }
     </style>
 </head>
 <body>
 
-<header>
-    <span class="site-name">The Grounds</span>
+<!-- SIDEBAR: brand + vertical nav -->
+<aside class="sidebar">
+    <span class="site-name">The<br>Grounds</span>
+    <div class="nav-zone">
     <nav>
         <a class="nav-link active" data-section="reviews">Reviews</a>
         <a class="nav-link"        data-section="location">Location</a>
@@ -223,10 +404,13 @@
         <a class="nav-link"        data-section="gallery">Gallery</a>
         <a class="nav-link"        data-section="contact">Contact</a>
     </nav>
-</header>
+    </div>
+</aside>
 
-<main>
-    <canvas id="attractor-canvas"></canvas>
+<!-- PAGE BODY: main content + footer -->
+<div class="page-body">
+    <main>
+        <canvas id="attractor-canvas"></canvas>
     <div class="stage-card" id="stage-card">
 
         <!-- REVIEWS -->
@@ -411,6 +595,7 @@
 
     </div><!-- /stage-card -->
 </main>
+    </main>
 
 <!-- LIGHTBOX -->
 <div class="lightbox" id="lightbox" role="dialog" aria-modal="true">
@@ -427,18 +612,32 @@
     <span class="footer-note">The Grounds &#8212; Est. 2019</span>
     <span class="footer-note">All rights reserved</span>
 </footer>
+</div>
 
 <script>
-
-// Inject email addresses via JS so they never appear in the HTML source.
-// Cloudflare's email protection scans the raw HTML for the @ character.
-// By assembling addresses at runtime, there is nothing for it to find
-// and therefore nothing for it to inject — permanently.
+// ── EMAIL INJECTION ───────────────────────────────────────────
+// Runs immediately — no font or layout dependency.
+// Assembling the @ character at runtime keeps it out of the raw HTML,
+// which permanently prevents Cloudflare's email-protection scanner
+// from finding it and injecting its decode script.
 (function() {
     var at = String.fromCharCode(64);
-    document.getElementById('contact-email-main').textContent  = 'hello'  + at + 'thegrounds.co';
-    document.getElementById('contact-email-trade').textContent = 'trade'  + at + 'thegrounds.co';
+    document.getElementById('contact-email-main').textContent  = 'hello' + at + 'thegrounds.co';
+    document.getElementById('contact-email-trade').textContent = 'trade' + at + 'thegrounds.co';
 })();
+
+
+// ── DEFERRED INIT ─────────────────────────────────────────────
+// document.fonts.ready resolves only after every CSS font (Special
+// Elite, Lora) has loaded and is ready to paint. Deferring init
+// until this point ensures that measureH always reads offsetHeight
+// against the real fonts — never against the fallback faces.
+//
+// Why this matters: Special Elite is significantly taller than the
+// Georgia fallback. If measureH runs before the font loads, every
+// sectionHeight is permanently too small and the card never fully
+// expands to contain its content.
+function init() {
 
 // ── HELPERS ──────────────────────────────────────────────────
 function measureH(el, width) {
@@ -452,19 +651,29 @@ function measureH(el, width) {
     s.width = prev.w; s.transition = prev.tr; s.visibility = prev.vis;
     return h;
 }
+
 var SECTION_WIDTHS = { reviews:560, location:680, about:540, gallery:740, contact:760 };
-var SECTION_PAD = 92;
-function clampW(w) { return Math.min(w, window.innerWidth * 0.92); }
+var SECTION_PAD    = 92;   // 44px left + 48px right padding on each section
+var SIDEBAR_W      = 160;  // must match --sidebar-w in CSS
+
+// clampW now subtracts the sidebar from the available viewport width
+// so sections never overflow the content area on narrow screens.
+function clampW(w) { return Math.min(w, (window.innerWidth - SIDEBAR_W) * 0.92); }
+
 
 // ── REVIEWS ──────────────────────────────────────────────────
 var INTERVAL = 16100;
-var slides = document.querySelectorAll('.review-slide');
-var slideDots = document.querySelectorAll('#slide-dots .dot');
+var slides           = document.querySelectorAll('.review-slide');
+var slideDots        = document.querySelectorAll('#slide-dots .dot');
 var reviewsContainer = document.getElementById('reviews-container');
 var currentSlide = 0, slideTimer = null;
-var slideW = clampW(SECTION_WIDTHS.reviews) - SECTION_PAD;
+
+// Measure slide heights first so reviews-container has an explicit
+// pixel height before the outer section height is measured below.
+var slideW       = clampW(SECTION_WIDTHS.reviews) - SECTION_PAD;
 var slideHeights = Array.from(slides).map(function(s) { return measureH(s, slideW); });
 reviewsContainer.style.height = slideHeights[0] + 'px';
+
 function goToSlide(index) {
     var next = (index + slides.length) % slides.length;
     reviewsContainer.style.height = slideHeights[next] + 'px';
@@ -479,18 +688,24 @@ function startAutoplay() {
     slideTimer = setInterval(function() { goToSlide(currentSlide + 1); }, INTERVAL);
 }
 slideDots.forEach(function(dot) {
-    dot.addEventListener('click', function() { goToSlide(parseInt(dot.dataset.index)); startAutoplay(); });
+    dot.addEventListener('click', function() {
+        goToSlide(parseInt(dot.dataset.index)); startAutoplay();
+    });
 });
 startAutoplay();
+
 
 // ── ABOUT PAGINATOR ──────────────────────────────────────────
 var aboutPages = document.querySelectorAll('#about-paginator .pager-page');
 var aboutDots  = document.querySelectorAll('#about-side-dots .about-dot');
 var aboutPagEl = document.getElementById('about-paginator');
 var aboutIdx = 0, pagCooldown = false;
-var aboutW = clampW(SECTION_WIDTHS.about) - SECTION_PAD - 36;
+
+// Subtract 36px extra for the side-dots column width.
+var aboutW         = clampW(SECTION_WIDTHS.about) - SECTION_PAD - 36;
 var aboutPgHeights = Array.from(aboutPages).map(function(p) { return measureH(p, aboutW); });
 aboutPagEl.style.height = aboutPgHeights[0] + 'px';
+
 function goToAboutPage(index) {
     var next = Math.max(0, Math.min(index, aboutPages.length - 1));
     if (next === aboutIdx) return;
@@ -500,10 +715,18 @@ function goToAboutPage(index) {
     aboutPages[aboutIdx].classList.add('active'); aboutDots[aboutIdx].classList.add('active');
 }
 aboutDots.forEach(function(dot) {
-    dot.addEventListener('click', function() { goToAboutPage(parseInt(dot.getAttribute('data-about-index'))); });
+    dot.addEventListener('click', function() {
+        goToAboutPage(parseInt(dot.getAttribute('data-about-index')));
+    });
 });
 
+
 // ── GALLERY PAGINATOR ────────────────────────────────────────
+// Gallery height is computed geometrically rather than measured,
+// because aspect-ratio:4/3 is an implicit CSS constraint rather
+// than an explicit pixel value — measureH can occasionally return
+// zero for implicitly-derived dimensions in certain environments.
+// Two lines of arithmetic is more reliable than a DOM read here.
 var galleryImages = [
     { src:'https://picsum.photos/seed/grounds01/1200/900', alt:'The Grounds' },
     { src:'https://picsum.photos/seed/grounds02/1200/900', alt:'The Grounds' },
@@ -518,13 +741,19 @@ var galleryImages = [
     { src:'https://picsum.photos/seed/grounds11/1200/900', alt:'The Grounds' },
     { src:'https://picsum.photos/seed/grounds12/1200/900', alt:'The Grounds' }
 ];
-var galleryPages = document.querySelectorAll('#gallery-paginator .gallery-page');
-var galleryDots  = document.querySelectorAll('#gallery-side-dots .gallery-dot');
-var galleryPagEl = document.getElementById('gallery-paginator');
+
+var galleryPages   = document.querySelectorAll('#gallery-paginator .gallery-page');
+var galleryDots    = document.querySelectorAll('#gallery-side-dots .gallery-dot');
+var galleryPagEl   = document.getElementById('gallery-paginator');
 var galleryPageIdx = 0;
-var galleryW = clampW(SECTION_WIDTHS.gallery) - SECTION_PAD - 36;
-var galleryPgHeights = Array.from(galleryPages).map(function(p) { return measureH(p, galleryW); });
-galleryPagEl.style.height = galleryPgHeights[0] + 'px';
+
+var galleryW     = clampW(SECTION_WIDTHS.gallery) - SECTION_PAD - 36;
+var galleryCellW = (galleryW - 20) / 3;         // 3 cols, 2 gaps × 10px
+var galleryCellH = galleryCellW * 3 / 4;         // aspect-ratio 4:3
+var galleryGridH = Math.round(galleryCellH * 2 + 10); // 2 rows + 1 row-gap
+galleryPagEl.style.height = galleryGridH + 'px';
+var galleryPgHeights = Array.from(galleryPages).map(function() { return galleryGridH; });
+
 function goToGalleryPage(index) {
     var next = Math.max(0, Math.min(index, galleryPages.length - 1));
     if (next === galleryPageIdx) return;
@@ -534,13 +763,16 @@ function goToGalleryPage(index) {
     galleryPages[galleryPageIdx].classList.add('active'); galleryDots[galleryPageIdx].classList.add('active');
 }
 galleryDots.forEach(function(dot) {
-    dot.addEventListener('click', function() { goToGalleryPage(parseInt(dot.getAttribute('data-gallery-index'))); });
+    dot.addEventListener('click', function() {
+        goToGalleryPage(parseInt(dot.getAttribute('data-gallery-index')));
+    });
 });
 document.querySelectorAll('.gallery-cell').forEach(function(cell) {
     cell.addEventListener('click', function() { openLightbox(parseInt(cell.dataset.globalIndex)); });
 });
 
-// ── SCROLL WHEEL ─────────────────────────────────────────────
+
+// ── SCROLL WHEEL (about + gallery) ───────────────────────────
 window.addEventListener('wheel', function(e) {
     if (pagCooldown) return;
     if (currentSection === 'about') {
@@ -552,6 +784,7 @@ window.addEventListener('wheel', function(e) {
     }
 }, { passive: true });
 
+
 // ── LIGHTBOX ─────────────────────────────────────────────────
 var lightbox        = document.getElementById('lightbox');
 var lightboxImg     = document.getElementById('lightbox-img');
@@ -560,6 +793,7 @@ var lightboxClose   = document.getElementById('lightbox-close');
 var lightboxPrev    = document.getElementById('lightbox-prev');
 var lightboxNext    = document.getElementById('lightbox-next');
 var currentLightboxIndex = 0;
+
 function openLightbox(index) {
     currentLightboxIndex = index; loadLightboxImage(index);
     lightbox.classList.add('visible'); document.body.style.overflow = 'hidden';
@@ -577,7 +811,10 @@ function loadLightboxImage(index) {
     var tmp = new Image();
     tmp.onload = function() {
         lightboxImg.src = data.src;
-        requestAnimationFrame(function() { requestAnimationFrame(function() { lightboxImg.classList.add('loaded'); }); });
+        // Double rAF guarantees the opacity transition fires after the src swap.
+        requestAnimationFrame(function() {
+            requestAnimationFrame(function() { lightboxImg.classList.add('loaded'); });
+        });
     };
     tmp.src = data.src;
 }
@@ -587,8 +824,8 @@ function navigateLightbox(delta) {
     currentLightboxIndex = next; loadLightboxImage(next);
 }
 lightboxClose.addEventListener('click', closeLightbox);
-lightboxPrev.addEventListener('click', function() { navigateLightbox(-1); });
-lightboxNext.addEventListener('click', function() { navigateLightbox(+1); });
+lightboxPrev.addEventListener('click',  function() { navigateLightbox(-1); });
+lightboxNext.addEventListener('click',  function() { navigateLightbox(+1); });
 lightbox.addEventListener('click', function(e) { if (e.target === lightbox) closeLightbox(); });
 document.addEventListener('keydown', function(e) {
     if (!lightbox.classList.contains('visible')) return;
@@ -596,6 +833,7 @@ document.addEventListener('keydown', function(e) {
     if (e.key === 'ArrowLeft')  navigateLightbox(-1);
     if (e.key === 'ArrowRight') navigateLightbox(+1);
 });
+
 
 // ── CONTACT FORM ─────────────────────────────────────────────
 document.getElementById('form-submit').addEventListener('click', function() {
@@ -610,45 +848,61 @@ document.getElementById('form-submit').addEventListener('click', function() {
     }, 600);
 });
 
+
 // ── STAGE NAVIGATION ─────────────────────────────────────────
+// Section heights are measured last, after all inner containers
+// (reviews-container, about-paginator, gallery-paginator) already
+// have explicit pixel heights set above. This ensures the outer
+// section reads the correct total height, not 0 for its children.
 var stageCard   = document.getElementById('stage-card');
 var navLinks    = document.querySelectorAll('.nav-link');
 var allSections = document.querySelectorAll('.stage-section');
 var sectionHeights = {}, sectionNodes = {};
+
 allSections.forEach(function(section) {
     var id = section.id.replace('section-', '');
     var w  = clampW(SECTION_WIDTHS[id] || 540);
     sectionHeights[id] = measureH(section, w);
     sectionNodes[id]   = section;
 });
+
 var currentSection = 'reviews', isAnimating = false;
+
+// Set dimensions without transition to prevent a 0→initial animation on load.
 stageCard.style.transition = 'none';
 stageCard.style.width  = clampW(SECTION_WIDTHS.reviews) + 'px';
 stageCard.style.height = sectionHeights.reviews + 'px';
 requestAnimationFrame(function() { stageCard.style.transition = ''; });
+
 function goToSection(incoming) {
     if (incoming === currentSection || isAnimating) return;
     isAnimating = true;
-    sectionNodes[currentSection].classList.remove('active');
+    sectionNodes[currentSection].classList.remove('active');      // phase 1: fade out
     setTimeout(function() {
         stageCard.style.width  = clampW(SECTION_WIDTHS[incoming] || 540) + 'px';
-        stageCard.style.height = sectionHeights[incoming] + 'px';
+        stageCard.style.height = sectionHeights[incoming] + 'px'; // phase 2: resize
         setTimeout(function() {
-            sectionNodes[incoming].classList.add('active');
+            sectionNodes[incoming].classList.add('active');        // phase 3: fade in
             currentSection = incoming; isAnimating = false;
             if (incoming === 'about') {
+                // Re-trigger the scroll hint animation on each About entry.
                 var hint = document.getElementById('about-scroll-hint');
-                hint.style.animation = 'none'; void hint.offsetWidth; hint.style.animation = '';
+                hint.style.animation = 'none';
+                void hint.offsetWidth; // force reflow to restart the keyframe
+                hint.style.animation = '';
             }
         }, 950);
     }, 400);
 }
+
 navLinks.forEach(function(link) {
     link.addEventListener('click', function() {
         navLinks.forEach(function(l) { l.classList.remove('active'); });
-        link.classList.add('active'); goToSection(link.dataset.section);
+        link.classList.add('active');
+        goToSection(link.dataset.section);
     });
 });
+
 window.addEventListener('resize', function() {
     stageCard.style.transition = 'none';
     stageCard.style.width  = clampW(SECTION_WIDTHS[currentSection]) + 'px';
@@ -656,12 +910,19 @@ window.addEventListener('resize', function() {
     requestAnimationFrame(function() { stageCard.style.transition = ''; });
 });
 
+
 // ── AIZAWA ATTRACTOR ─────────────────────────────────────────
+// The canvas is now position:fixed, covering the full viewport
+// including behind the sidebar. The attractor breathes through
+// both panes of the interface — sidebar and stage card — which
+// reinforces that they belong to the same spatial world.
 var A_a=0.95, A_b=0.7, A_c=0.6, A_d=3.5, A_e=0.25, A_f=0.1;
 var dt=0.004, NOISE=0.004;
 var canvas = document.getElementById('attractor-canvas');
-var ctx = canvas.getContext('2d');
-function resizeCanvas() { canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight; }
+var ctx    = canvas.getContext('2d');
+
+function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+
 function aizawa(x,y,z) {
     return {
         dx: (z-A_b)*x - A_d*y,
@@ -681,6 +942,7 @@ function rk4(x,y,z,noise) {
     function n() { return (Math.random()*2-1)*NOISE; }
     return {x:nx+n(),y:ny+n(),z:nz+n()};
 }
+
 var rotY=0, ROT_SPEED=0.00018, TILT=0.42;
 function project(x,y,z) {
     var cy=Math.cos(rotY), sy=Math.sin(rotY);
@@ -690,16 +952,18 @@ function project(x,y,z) {
     var scale=Math.min(canvas.width,canvas.height)/3.4;
     return { px:canvas.width/2+fx*scale, py:canvas.height/2-fy*scale };
 }
+
 var HALO_R=7.0;
 function drawParticle(px,py,alpha) {
     var g=ctx.createRadialGradient(px,py,0,px,py,HALO_R);
-    g.addColorStop(0,   'hsla(28,65%,38%,'+alpha.toFixed(2)+')');
-    g.addColorStop(0.25,'hsla(28,55%,45%,'+(alpha*0.55).toFixed(2)+')');
-    g.addColorStop(0.6, 'hsla(28,45%,50%,'+(alpha*0.18).toFixed(2)+')');
-    g.addColorStop(1.0, 'hsla(28,40%,55%,0)');
+    g.addColorStop(0,    'hsla(28,65%,38%,'+alpha.toFixed(2)+')');
+    g.addColorStop(0.25, 'hsla(28,55%,45%,'+(alpha*0.55).toFixed(2)+')');
+    g.addColorStop(0.6,  'hsla(28,45%,50%,'+(alpha*0.18).toFixed(2)+')');
+    g.addColorStop(1.0,  'hsla(28,40%,55%,0)');
     ctx.beginPath(); ctx.arc(px,py,HALO_R,0,Math.PI*2);
     ctx.fillStyle=g; ctx.fill();
 }
+
 var particles=[];
 function initParticles() {
     particles=[];
@@ -729,6 +993,15 @@ resizeCanvas();
 initParticles();
 requestAnimationFrame(animate);
 
+} // end init()
+
+
+// ── BOOT ─────────────────────────────────────────────────────
+if (document.fonts && document.fonts.ready) {
+    document.fonts.ready.then(init);
+} else {
+    window.addEventListener('load', init);
+}
 </script>
 </body>
 </html>
