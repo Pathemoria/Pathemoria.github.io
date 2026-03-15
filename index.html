@@ -361,33 +361,160 @@
         }
         .footer-note { font-family:'Special Elite',monospace; font-size:0.6rem; letter-spacing:0.14em; text-transform:uppercase; opacity:0.3; }
 
-        /* ── RESPONSIVE ───────────────────────────────────────────
-           Below 700px the sidebar folds into a compact top strip.
-           The nav items go horizontal and the site name shrinks or
-           hides to preserve space. */
+        /* ── RESPONSIVE ───────────────────────────────────────────────
+           Three breakpoints, three distinct behaviours.
+
+           ≪900px  Narrow desktop / tablet landscape.
+                   Sidebar stays vertical. Padding tightens.
+                   Two-column contact and location collapse early.
+
+           ≤700px  Tablet portrait / phone landscape. THE KEY SHIFT.
+                   Sidebar becomes a compact horizontal topbar.
+                   Stage card hands dimensions back to CSS (height:auto)
+                   so it grows freely with wrapped mobile text.
+                   Sections flip from position:absolute+opacity-toggle to
+                   position:relative + height:0 (collapsed when inactive)
+                   so the card's auto-height reflects its actual content.
+                   Body scrolls normally; main is no longer a grid.
+
+           ≤480px  Phone portrait.
+                   Gallery drops to one column. Padding tightens further.
+                   Footer simplifies. */
+
+        /* ── ≤900px ─────────────────────────────────────────────────────*/
+        @media (max-width: 900px) {
+            .stage-section  { padding: 38px 32px 34px 32px; }
+            .contact-grid   { grid-template-columns: 1fr; }
+            .contact-info   { padding-right:0; border-right:none; border-bottom:1px solid var(--rule); padding-bottom:20px; margin-bottom:20px; }
+            .contact-form-col { padding-left:0; }
+            .location-grid  { grid-template-columns: 1fr; }
+            .location-map   { height: 180px; }
+            footer          { padding: 14px 32px; }
+        }
+
+        /* ── ≤700px ─────────────────────────────────────────────────────*/
         @media (max-width: 700px) {
-            body { flex-direction: column; overflow: auto; }
+
+            /* Body: column stack, scrollable, natural height. */
+            body {
+                flex-direction: column;
+                overflow-y: auto; overflow-x: hidden;
+                height: auto; min-height: 100vh;
+            }
+
+            /* Sidebar → horizontal topbar, full width, auto height.
+               The dot-matrix texture carries through for material continuity. */
             .sidebar {
-                width: 100%; min-height: auto;
-                flex-direction: row; align-items: center;
-                padding: 14px 20px;
+                width: 100%; min-height: auto; height: auto;
+                flex-direction: row; align-items: stretch;
+                padding: 0;
                 border-right: none; border-bottom: 1px solid var(--rule);
             }
-            .site-name { margin-bottom: 0; margin-right: 24px; font-size: 0.65rem; }
-            .nav-zone { flex-direction: row; align-items: center; padding-bottom: 0; }
+            .sidebar::after { display: none; }
+
+            /* Site name: single line, left column of the topbar.
+               <br> suppressed via CSS so "The Grounds" runs on one line. */
+            .site-name {
+                flex-shrink: 0; display: flex; align-items: center;
+                font-size: 0.68rem; letter-spacing: 0.18em; line-height: 1;
+                padding: 14px 18px; white-space: nowrap;
+                border-bottom: none; border-right: 1px solid rgba(26,18,9,0.12);
+            }
+            .site-name br      { display: none; }
+            .site-name::after  { display: none; }
+
+            /* Nav zone: horizontal scrollable strip.
+               scrollbar-width:none hides the scrollbar without
+               affecting scroll behaviour (still swipeable). */
+            .nav-zone {
+                flex: 1; flex-direction: row; align-items: stretch;
+                justify-content: flex-start; padding-bottom: 0;
+                overflow-x: auto; overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .nav-zone::-webkit-scrollbar { display: none; }
             .nav-zone::before { display: none; }
-            nav { flex-direction: row; gap: 20px; }
-            nav a { padding: 4px 0; border-left: none; border-bottom: 2px solid transparent; white-space: nowrap; }
-            nav a.active { border-bottom-color: var(--amber); border-left-color: transparent; }
-            nav::after { display: none; }
-            .page-body { min-height: 0; }
-            .stage-section { padding: 32px 28px 28px 28px; }
-            .location-grid { grid-template-columns: 1fr; }
-            .gallery-grid  { grid-template-columns: repeat(2,1fr); }
-            .contact-grid  { grid-template-columns: 1fr; }
-            .contact-info  { padding-right:0; border-right:none; border-bottom:1px solid var(--rule); padding-bottom:20px; margin-bottom:20px; }
-            .contact-form-col { padding-left:0; }
-            footer { padding: 14px 20px; }
+
+            /* Nav items: horizontal tabs with amber bottom-border
+               indicator on active. Height fills the topbar row. */
+            nav { flex-direction: row; align-items: stretch; gap: 0; }
+            nav a {
+                display: flex; align-items: center;
+                padding: 0 15px; height: 100%;
+                border-left: none;
+                border-bottom: 2px solid transparent;
+                border-right: 1px solid rgba(26,18,9,0.04);
+                font-size: 0.57rem; letter-spacing: 0.15em;
+                white-space: nowrap; opacity: 0.35;
+            }
+            nav a::before  { display: none; }
+            nav a:hover    { background-color: rgba(26,18,9,0.04); opacity: 0.65; }
+            nav a.active   {
+                opacity: 1; background-color: transparent;
+                border-left-color: transparent;
+                border-bottom-color: var(--amber);
+            }
+
+            /* Page body and main: column-stacked, padded, not a grid. */
+            .page-body { flex: 1; min-height: 0; overflow: visible; }
+            main {
+                display: flex; flex-direction: column; align-items: center;
+                padding: 28px 16px 40px;
+            }
+
+            /* Stage card: CSS fully owns dimensions on mobile.
+               !important overrides the inline pixel values set by JS,
+               which are correct on desktop but wrong on mobile because
+               they were calculated for a different viewport/column width.
+               transition:none prevents height:auto from triggering the
+               resize animation that only makes sense on desktop. */
+            .stage-card {
+                width: calc(100vw - 32px) !important;
+                max-width: 600px;
+                height: auto !important;
+                transition: none !important;
+            }
+
+            /* Sections: stacked in normal flow, collapsed when inactive.
+               On desktop, all sections are position:absolute at top:0,
+               toggled by opacity. That only works with a JS-calculated
+               parent height. On mobile with height:auto, inactive sections
+               must physically take zero space — achieved with height:0 +
+               overflow:hidden. Active section expands to fit its content. */
+            .stage-section {
+                position: relative; height: 0;
+                overflow: hidden; opacity: 0; padding: 0;
+                pointer-events: none; transition: none;
+            }
+            .stage-section.active {
+                height: auto; overflow: visible;
+                opacity: 1; padding: 32px 22px 28px 22px;
+                pointer-events: auto;
+            }
+
+            /* Scroll hint requires a scroll wheel — not meaningful on touch. */
+            .scroll-hint { display: none; }
+
+            /* Gallery: 2 columns at tablet. */
+            .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+            .location-map { height: 200px; }
+            footer { padding: 12px 20px; }
+        }
+
+        /* ── ≤480px ─────────────────────────────────────────────────────*/
+        @media (max-width: 480px) {
+            .stage-section.active { padding: 24px 16px 22px 16px; }
+            /* Single-column gallery — two cols at 480px gives ~170px cells,
+               too narrow for a comfortable 4:3 aspect ratio. */
+            .gallery-grid { grid-template-columns: 1fr; }
+            nav a { padding: 0 11px; font-size: 0.52rem; letter-spacing: 0.12em; }
+            .site-name { font-size: 0.62rem; padding: 12px 14px; }
+            .section-heading { font-size: 0.88rem; margin-bottom: 16px; }
+            .reviewer-name   { font-size: 0.68rem; }
+            .owner-label     { font-size: 0.55rem; }
+            footer .footer-note:last-child { display: none; }
+            footer { padding: 10px 16px; }
         }
     </style>
 </head>
@@ -594,7 +721,6 @@
         </div>
 
     </div><!-- /stage-card -->
-</main>
     </main>
 
 <!-- LIGHTBOX -->
@@ -653,12 +779,39 @@ function measureH(el, width) {
 }
 
 var SECTION_WIDTHS = { reviews:560, location:680, about:540, gallery:740, contact:760 };
-var SECTION_PAD    = 92;   // 44px left + 48px right padding on each section
-var SIDEBAR_W      = 160;  // must match --sidebar-w in CSS
+var SIDEBAR_W      = 160;  // must match --sidebar-w CSS variable
 
-// clampW now subtracts the sidebar from the available viewport width
-// so sections never overflow the content area on narrow screens.
-function clampW(w) { return Math.min(w, (window.innerWidth - SIDEBAR_W) * 0.92); }
+// isMobile: true when the 700px breakpoint is active. At this point the
+// sidebar is a horizontal topbar, sections use height:auto, and goToSection
+// switches to an instant swap instead of the three-phase desktop animation.
+function isMobile() { return window.innerWidth <= 700; }
+
+// getSectionPad: horizontal padding of .stage-section at each breakpoint.
+// Must exactly mirror the CSS padding values so measureH wraps text at the
+// correct column width. Under-reporting the pad makes sections measure too
+// short; over-reporting makes them measure too tall.
+function getSectionPad() {
+    if (window.innerWidth <= 480) return 32;  // 16px each side
+    if (window.innerWidth <= 700) return 44;  // 22px each side
+    return 92;                                 // 44px left + 48px right (desktop)
+}
+
+// getGalleryCols: mirrors the CSS grid-template-columns at each breakpoint.
+// Used in the geometric height calculation so the paginator height matches
+// what the browser actually renders.
+function getGalleryCols() {
+    if (window.innerWidth <= 480) return 1;
+    if (window.innerWidth <= 700) return 2;
+    return 3;
+}
+
+// clampW: maximum section width at the current viewport.
+// Subtracts the sidebar width only on desktop, where it occupies horizontal
+// space. On mobile the sidebar is a topbar — no horizontal cost.
+function clampW(w) {
+    var available = isMobile() ? window.innerWidth : window.innerWidth - SIDEBAR_W;
+    return Math.min(w, available * 0.92);
+}
 
 
 // ── REVIEWS ──────────────────────────────────────────────────
@@ -670,7 +823,7 @@ var currentSlide = 0, slideTimer = null;
 
 // Measure slide heights first so reviews-container has an explicit
 // pixel height before the outer section height is measured below.
-var slideW       = clampW(SECTION_WIDTHS.reviews) - SECTION_PAD;
+var slideW       = clampW(SECTION_WIDTHS.reviews) - getSectionPad();
 var slideHeights = Array.from(slides).map(function(s) { return measureH(s, slideW); });
 reviewsContainer.style.height = slideHeights[0] + 'px';
 
@@ -702,7 +855,7 @@ var aboutPagEl = document.getElementById('about-paginator');
 var aboutIdx = 0, pagCooldown = false;
 
 // Subtract 36px extra for the side-dots column width.
-var aboutW         = clampW(SECTION_WIDTHS.about) - SECTION_PAD - 36;
+var aboutW         = clampW(SECTION_WIDTHS.about) - getSectionPad() - 36;
 var aboutPgHeights = Array.from(aboutPages).map(function(p) { return measureH(p, aboutW); });
 aboutPagEl.style.height = aboutPgHeights[0] + 'px';
 
@@ -747,10 +900,15 @@ var galleryDots    = document.querySelectorAll('#gallery-side-dots .gallery-dot'
 var galleryPagEl   = document.getElementById('gallery-paginator');
 var galleryPageIdx = 0;
 
-var galleryW     = clampW(SECTION_WIDTHS.gallery) - SECTION_PAD - 36;
-var galleryCellW = (galleryW - 20) / 3;         // 3 cols, 2 gaps × 10px
-var galleryCellH = galleryCellW * 3 / 4;         // aspect-ratio 4:3
-var galleryGridH = Math.round(galleryCellH * 2 + 10); // 2 rows + 1 row-gap
+// Gallery height: geometric, breakpoint-aware column count.
+// Mirrors CSS grid-template-columns at each breakpoint exactly.
+var galleryCols     = getGalleryCols();
+var galleryGapCount = galleryCols - 1;
+var galleryRowCount = Math.ceil(6 / galleryCols);  // 6 images per page
+var galleryW        = clampW(SECTION_WIDTHS.gallery) - getSectionPad() - 36;
+var galleryCellW    = (galleryW - galleryGapCount * 10) / galleryCols;
+var galleryCellH    = galleryCellW * 3 / 4;        // aspect-ratio 4:3
+var galleryGridH    = Math.round(galleryCellH * galleryRowCount + (galleryRowCount - 1) * 10);
 galleryPagEl.style.height = galleryGridH + 'px';
 var galleryPgHeights = Array.from(galleryPages).map(function() { return galleryGridH; });
 
@@ -868,27 +1026,47 @@ allSections.forEach(function(section) {
 
 var currentSection = 'reviews', isAnimating = false;
 
-// Set dimensions without transition to prevent a 0→initial animation on load.
-stageCard.style.transition = 'none';
-stageCard.style.width  = clampW(SECTION_WIDTHS.reviews) + 'px';
-stageCard.style.height = sectionHeights.reviews + 'px';
-requestAnimationFrame(function() { stageCard.style.transition = ''; });
+// Desktop only: set initial card dimensions without a transition so the
+// card doesn't animate from 0×0 on page load. On mobile, CSS owns the
+// dimensions via !important rules — setting inline styles here would
+// fight the stylesheet and produce incorrect sizes.
+if (!isMobile()) {
+    stageCard.style.transition = 'none';
+    stageCard.style.width  = clampW(SECTION_WIDTHS.reviews) + 'px';
+    stageCard.style.height = sectionHeights.reviews + 'px';
+    requestAnimationFrame(function() { stageCard.style.transition = ''; });
+}
 
 function goToSection(incoming) {
     if (incoming === currentSection || isAnimating) return;
     isAnimating = true;
-    sectionNodes[currentSection].classList.remove('active');      // phase 1: fade out
+
+    if (isMobile()) {
+        // Mobile fast-path: instant swap.
+        // Sections on mobile use height:0 / height:auto toggled by the
+        // .active class, not opacity fades. An instant swap is the right
+        // UX on touch — the three-phase desktop animation (fade, resize,
+        // fade) would look like a glitch here, not a transition.
+        sectionNodes[currentSection].classList.remove('active');
+        sectionNodes[incoming].classList.add('active');
+        currentSection = incoming; isAnimating = false;
+        // Scroll the card into view in case the user had scrolled down.
+        stageCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        return;
+    }
+
+    // Desktop three-phase: fade out → resize card → fade in.
+    sectionNodes[currentSection].classList.remove('active');           // phase 1
     setTimeout(function() {
         stageCard.style.width  = clampW(SECTION_WIDTHS[incoming] || 540) + 'px';
-        stageCard.style.height = sectionHeights[incoming] + 'px'; // phase 2: resize
+        stageCard.style.height = sectionHeights[incoming] + 'px';     // phase 2
         setTimeout(function() {
-            sectionNodes[incoming].classList.add('active');        // phase 3: fade in
+            sectionNodes[incoming].classList.add('active');            // phase 3
             currentSection = incoming; isAnimating = false;
             if (incoming === 'about') {
-                // Re-trigger the scroll hint animation on each About entry.
                 var hint = document.getElementById('about-scroll-hint');
                 hint.style.animation = 'none';
-                void hint.offsetWidth; // force reflow to restart the keyframe
+                void hint.offsetWidth;
                 hint.style.animation = '';
             }
         }, 950);
@@ -903,11 +1081,54 @@ navLinks.forEach(function(link) {
     });
 });
 
+// Debounced resize handler: canvas updates immediately (cheap),
+// remeasurement waits 120ms for the drag to settle.
+var resizeTimer = null;
 window.addEventListener('resize', function() {
-    stageCard.style.transition = 'none';
-    stageCard.style.width  = clampW(SECTION_WIDTHS[currentSection]) + 'px';
-    stageCard.style.height = sectionHeights[currentSection] + 'px';
-    requestAnimationFrame(function() { stageCard.style.transition = ''; });
+    resizeCanvas(); // always immediate
+
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function() {
+        var pad  = getSectionPad();
+        var cols = getGalleryCols();
+
+        // Re-measure inner containers at their new widths.
+        var newSlideW = clampW(SECTION_WIDTHS.reviews) - pad;
+        slideHeights = Array.from(slides).map(function(s) { return measureH(s, newSlideW); });
+        reviewsContainer.style.height = slideHeights[currentSlide] + 'px';
+
+        var newAboutW = clampW(SECTION_WIDTHS.about) - pad - 36;
+        aboutPgHeights = Array.from(aboutPages).map(function(p) { return measureH(p, newAboutW); });
+        aboutPagEl.style.height = aboutPgHeights[aboutIdx] + 'px';
+
+        var gapCount  = cols - 1;
+        var rowCount  = Math.ceil(6 / cols);
+        var newGalW   = clampW(SECTION_WIDTHS.gallery) - pad - 36;
+        var newCellW  = (newGalW - gapCount * 10) / cols;
+        var newCellH  = newCellW * 3 / 4;
+        var newGridH  = Math.round(newCellH * rowCount + (rowCount - 1) * 10);
+        galleryPagEl.style.height = newGridH + 'px';
+        for (var i = 0; i < galleryPgHeights.length; i++) { galleryPgHeights[i] = newGridH; }
+
+        // Remeasure outer section heights now that inner containers are updated.
+        allSections.forEach(function(section) {
+            var id = section.id.replace('section-', '');
+            sectionHeights[id] = measureH(section, clampW(SECTION_WIDTHS[id] || 540));
+        });
+
+        // On desktop: apply new dimensions to the card without a transition.
+        // On mobile: clear any inline styles set while in desktop mode so CSS
+        // can take full control of the card dimensions again.
+        stageCard.style.transition = 'none';
+        if (isMobile()) {
+            stageCard.style.width  = '';
+            stageCard.style.height = '';
+        } else {
+            stageCard.style.width  = clampW(SECTION_WIDTHS[currentSection]) + 'px';
+            stageCard.style.height = sectionHeights[currentSection] + 'px';
+        }
+        requestAnimationFrame(function() { stageCard.style.transition = ''; });
+    }, 120);
 });
 
 
